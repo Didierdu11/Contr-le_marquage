@@ -18,6 +18,7 @@ button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}b
 .res{font-size:22px;font-weight:700;padding:10px;border-radius:8px;text-align:center;color:#fff}.ok{background:var(--ok)}.ko{background:var(--ko)}
 .h{display:flex;gap:8px;border-top:1px solid var(--bd);padding:8px 0;font-size:13px}.h img{width:48px;height:48px;object-fit:cover;border-radius:6px}
 .hide{display:none}
+.pv{background:#fff;color:#111;border:2px solid #111;border-radius:6px;padding:14px 12px;margin-top:8px;font:700 24px/1.3 'Courier New',ui-monospace,monospace;letter-spacing:.06em;white-space:pre-wrap;word-break:break-word}.pc{font-size:12px;color:var(--mu);margin-top:10px}
 </style></head><body>
 <h1>Contrôle marquage carton</h1>
 
@@ -27,7 +28,8 @@ button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}b
 <div class="c"><h2>2. Opérateur et produit</h2>
 <label>Nom de l'opérateur</label><input id="op" autocomplete="name">
 <label>Produit</label><select id="pr"><option value="">— choisir —</option></select>
-<div id="exp" class="m k" style="margin-top:8px"></div></div>
+<div id="exp" class="m k" style="margin-top:8px"></div>
+<div id="pv" class="hide"></div><div id="pc" class="hide"></div></div>
 
 <div class="c" id="ctl"><h2>3. Contrôle</h2>
 <div class="r"><button id="bp">📷 Photo</button><button id="bm" class="s">⌨️ Saisie manuelle</button></div>
@@ -88,8 +90,11 @@ function calc(t,now=new Date()){
   date=t.fmt.replace(/AAAA|MMM|MM|JJ|AA/g,k=>({AAAA:e.getFullYear(),MMM:MOIS[e.getMonth()],MM:p2(e.getMonth()+1),JJ:p2(e.getDate()),AA:p2(e.getFullYear()%100)})[k])}
  return{lot,date}}
 const typ=()=>{const p=DB.prods.find(x=>x.n===$('pr').value);return p?{name:p.t,...DB.types[p.t]}:null};
-function exp(){const t=typ();if(!t||!t.tpl&&!t.fmt&&t.dur===undefined){$('exp').textContent=t?`Type « ${t.name} » introuvable dans le fichier`:'';return}
- const c=calc(t);$('exp').textContent=`Type : ${t.name}\nLot attendu : ${c.lot}\nDate attendue : ${c.date||'—'}\nHeure contrôlée : ${t.heure?'oui (±10 min)':'non'}`+(t.tpl?'':'\n⚠ Texte modèle non renseigné : seuls date et lot seront contrôlés')}
+function exp(){const t=typ();if(!t||!t.tpl&&!t.fmt&&t.dur===undefined){$('pv').className='hide';$('pc').className='hide';$('exp').textContent=t?`Type « ${t.name} » introuvable dans le fichier`:'';return}
+ const c=calc(t),n=new Date(),hm=p2(n.getHours())+':'+p2(n.getMinutes());
+ let pv=t.tpl?t.tpl.replace(/\{DATE\}/g,c.date).replace(/\{LOT\}/g,c.lot).replace(/\{HEURE\}/g,hm).replace(/\{\*\}/g,' … '):((c.date?c.date+'\n':'')+c.lot+(t.heure?' '+hm:''));
+ $('pv').className='pv';$('pv').textContent=pv;$('pc').className='pc';$('pc').textContent="Aperçu de ce que le carton doit afficher maintenant (lot, date et heure calculés). Comparez-le au carton.";
+ $('exp').textContent=`Type : ${t.name}\nLot attendu : ${c.lot}\nDate attendue : ${c.date||'—'}\nHeure contrôlée : ${t.heure?'oui (±10 min)':'non'}`+(t.tpl?'':'\n⚠ Texte modèle non renseigné : seuls date et lot seront contrôlés')}
 $('pr').onchange=async()=>{const n=$('pr').value;
  if(prevProd&&n!==prevProd){const r=(await all()).filter(x=>x.prod===prevProd&&!x.exp);if(r.length&&confirm(`Changement de produit : exporter les ${r.length} contrôle(s) de « ${prevProd} » ?`))await exportX(r,'changement_'+prevProd)}
  prevProd=n;exp();reset()};
@@ -176,5 +181,5 @@ async function exportX(rows,name){
  for(const r of rows){r.exp=true;await put(r)}}
 $('be').onclick=async()=>{const r=await all();if(r.length)exportX(r,'tout');else alert('Aucun contrôle')};
 $('bc').onclick=async()=>{const r=(await all()).filter(x=>!x.exp);if(r.length)exportX(r,'nouveaux');else alert('Rien à exporter')};
-ui();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+ui();setInterval(exp,30000);if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script></body></html>
