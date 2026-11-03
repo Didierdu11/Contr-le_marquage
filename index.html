@@ -31,7 +31,9 @@ button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}b
 
 <div class="c" id="ctl"><h2>3. Contrôle</h2>
 <div class="r"><button id="bp">📷 Photo</button><button id="bm" class="s">⌨️ Saisie manuelle</button></div>
-<input type="file" id="ph" accept="image/*" capture="environment" class="hide">
+<button id="bi" class="s">🖼️ Importer une photo (galerie / fichier)</button>
+<div class="m" style="margin-top:6px">Astuce : photographiez de près, avec des caractères bien grands et nets.</div>
+<input type="file" id="ph" accept="image/*" capture="environment" class="hide"><input type="file" id="ph2" accept="image/*" class="hide">
 <div id="ocr" class="m"></div>
 <div id="cr" class="hide"><div class="m" style="margin:8px 0 4px">Entourez du doigt la zone du marquage (sans le décor)</div>
 <canvas id="cv" style="width:100%;touch-action:none;border-radius:8px;display:block"></canvas>
@@ -95,6 +97,7 @@ $('op').oninput=()=>{try{localStorage.setItem('op',$('op').value)}catch(e){}};
 function reset(){cur={photo:null,mode:'Manuel'};$('ed').classList.add('hide');$('cr').classList.add('hide');$('tx').value='';$('out').innerHTML='';$('ocr').textContent=''}
 
 /* Photo + OCR */
+$('bi').onclick=()=>{if(!ok())return;$('ph2').click()};
 $('bp').onclick=()=>{if(!ok())return;$('ph').click()};
 $('bm').onclick=()=>{if(!ok())return;reset();$('ed').classList.remove('hide');$('tx').focus()};
 function ok(){if(!$('op').value.trim()){alert("Saisissez le nom de l'opérateur");return false}if(!typ()){alert('Choisissez un produit (et chargez le fichier Excel)');return false}return true}
@@ -108,7 +111,7 @@ function draw(){const cv=$('cv'),x=cv.getContext('2d');x.drawImage(img,0,0);
  cv.onpointerdown=e=>{cv.setPointerCapture(e.pointerId);st=pt(e);sel={x:st.x,y:st.y,w:1,h:1}};
  cv.onpointermove=e=>{if(!st)return;const p=pt(e);sel={x:Math.min(st.x,p.x),y:Math.min(st.y,p.y),w:Math.abs(p.x-st.x),h:Math.abs(p.y-st.y)};draw()};
  cv.onpointerup=()=>{st=null;if(sel&&(sel.w<20||sel.h<20))sel=null;draw()}})();
-$('ph').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+$('ph').onchange=$('ph2').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
  reset();cur.photo=await shrink(f);img=new Image();img.onload=()=>{const cv=$('cv');cv.width=img.width;cv.height=img.height;sel=null;draw();$('cr').classList.remove('hide')};img.src=cur.photo};
 $('bs').onclick=()=>{cur.mode='Photo + saisie manuelle';$('cr').classList.add('hide');$('ocr').textContent='Photo conservée. Saisissez le marquage ci-dessous.';$('ed').classList.remove('hide');$('tx').focus()};
 function prep(dots){const r=sel||{x:0,y:0,w:img.width,h:img.height},k=Math.min(3,Math.max(1,1100/r.w)),c=document.createElement('canvas');
@@ -138,7 +141,7 @@ $('bo').onclick=async()=>{$('bo').disabled=true;$('ocr').textContent='Lecture en
 
 /* Vérification */
 const esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-const norm=s=>s.toUpperCase().replace(/\s+/g,' ').trim();
+const norm=s=>s.toUpperCase().replace(/\s+/g,'');
 function verify(t,txt){
  const c=calc(t),why=[],T=norm(txt);let heure='';
  if(c.date&&!T.includes(c.date.toUpperCase()))why.push(`Date attendue « ${c.date} » introuvable`);
@@ -146,8 +149,8 @@ function verify(t,txt){
  if(t.heure){const m=T.match(/(\d{1,2})\s*[:;.H]\s*(\d{2})/);
   if(m){heure=`${m[1]}:${m[2]}`;const n=new Date(),a=n.getHours()*60+n.getMinutes(),b=+m[1]*60+ +m[2];let d=Math.abs(a-b);d=Math.min(d,1440-d);
    if(d>10)why.push(`Heure ${heure} : écart de ${d} min avec l'appareil (max 10)`)}}
- if(t.tpl&&!why.length){let r=esc(norm(t.tpl.replace(/\{DATE\}/g,c.date).replace(/\{LOT\}/g,c.lot))).replace(/\\\{HEURE\\\}|\{HEURE\}/g,'\\d{1,2}\\s*[:;.H]\\s*\\d{2}').replace(/ /g,'\\s*');
-  if(!new RegExp('^'+r+'$').test(T.replace(/\s+/g,' ')))why.push('Le texte lu ne correspond pas au texte modèle')}
+ if(t.tpl&&!why.length){let r=esc(norm(t.tpl.replace(/\{DATE\}/g,c.date).replace(/\{LOT\}/g,c.lot))).replace(/\\\{HEURE\\\}/g,'\\d{1,2}[:;.H]\\d{2}').replace(/\\\{\\\*\\\}/g,'.*');
+  if(!new RegExp('^'+r+'$').test(T))why.push('Le texte lu ne correspond pas au texte modèle')}
  return{c,why,heure}}
 $('bv').onclick=async()=>{if(!ok())return;const txt=$('tx').value;if(!txt.trim()){alert('Aucun texte');return}
   if(cur.mode==='Photo'&&txt.trim()!==(cur.ocr||'').trim())cur.mode='Photo + corrigé manuellement';
