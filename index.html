@@ -38,10 +38,10 @@ button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}b
 <input type="file" id="ph" accept="image/*" capture="environment" class="hide"><input type="file" id="ph2" accept="image/*" class="hide">
 <div id="ocr" class="m"></div>
 <div id="cr" class="hide"><div class="m" style="margin:8px 0 4px">Entourez du doigt la zone du marquage (sans le décor)</div>
-<canvas id="cv" style="width:100%;touch-action:none;border-radius:8px;display:block"></canvas>
-<div class="r"><button id="bo">🔍 Lire la zone</button><button id="bs" class="s">Saisir à la main</button></div><button id="bk" class="s">🧪 Comparer à l'image attendue (sans lecture)</button></div>
-<div id="ed" class="hide"><label>Texte lu (corrigez si besoin)</label><textarea id="tx" rows="4" class="k"></textarea>
-<button id="bv">Vérifier et enregistrer</button></div>
+<canvas id="cv" style="max-width:100%;max-height:56vh;margin:0 auto;touch-action:none;border-radius:8px;display:block"></canvas>
+<div style="position:sticky;bottom:0;background:var(--card);padding:6px 0;z-index:5"><div class="r"><button id="bo">🔍 Lire la zone</button><button id="bs" class="s">Saisir à la main</button></div><button id="bk" class="s">🧪 Comparer à l'image attendue (sans lecture)</button></div></div>
+<div id="ed" class="hide"><div id="cmp"></div><label>Corrigez si besoin :</label><textarea id="tx" rows="4" class="k"></textarea>
+<button id="bv">Vérifier et enregistrer</button><button id="bb" class="s">↩ Redessiner le cadre</button></div>
 <div id="ov" class="hide"></div><div id="out" style="margin-top:10px"></div></div>
 
 <div class="c"><h2>Historique</h2>
@@ -99,7 +99,7 @@ $('pr').onchange=async()=>{const n=$('pr').value;
  if(prevProd&&n!==prevProd){const r=(await all()).filter(x=>x.prod===prevProd&&!x.exp);if(r.length&&confirm(`Changement de produit : exporter les ${r.length} contrôle(s) de « ${prevProd} » ?`))await exportX(r,'changement_'+prevProd)}
  prevProd=n;exp();reset()};
 $('op').oninput=()=>{try{localStorage.setItem('op',$('op').value)}catch(e){}};
-function reset(){cur={photo:null,mode:'Manuel'};$('ov').className='hide';$('ed').classList.add('hide');$('cr').classList.add('hide');$('tx').value='';$('out').innerHTML='';$('ocr').textContent=''}
+function reset(){cur={photo:null,mode:'Manuel'};$('ov').className='hide';$('ed').classList.add('hide');$('cr').classList.add('hide');$('tx').value='';$('out').innerHTML='';$('ocr').textContent='';$('cmp').innerHTML=''}
 
 /* Photo + OCR */
 $('bi').onclick=()=>{if(!ok())return;$('ph2').click()};
@@ -118,7 +118,7 @@ function draw(){const cv=$('cv'),x=cv.getContext('2d');x.drawImage(img,0,0);
  cv.onpointerup=()=>{st=null;if(sel&&(sel.w<20||sel.h<20))sel=null;draw()}})();
 $('ph').onchange=$('ph2').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
  reset();cur.photo=await shrink(f);img=new Image();img.onload=()=>{const cv=$('cv');cv.width=img.width;cv.height=img.height;sel=null;draw();$('cr').classList.remove('hide')};img.src=cur.photo};
-$('bs').onclick=()=>{cur.mode='Photo + saisie manuelle';$('cr').classList.add('hide');$('ocr').textContent='Photo conservée. Saisissez le marquage ci-dessous.';$('ed').classList.remove('hide');$('tx').focus()};
+$('bs').onclick=()=>{cur.mode='Photo + saisie manuelle';$('cr').classList.add('hide');$('ocr').textContent='Photo conservée. Saisissez le marquage ci-dessous.';$('ed').classList.remove('hide');fillCmp(cur.photo,'Photo prise');$('cmp').scrollIntoView({block:'start'})};
 function blur(g,W,H,r){let a=Float32Array.from(g),b=new Float32Array(g.length);
  for(let it=0;it<2;it++){
   for(let y=0;y<H;y++){let s=0,o=y*W;for(let x=-r;x<W;x++){if(x+r<W)s+=a[o+x+r];if(x-r-1>=0)s-=a[o+x-r-1];if(x>=0){const l=Math.max(0,x-r),h=Math.min(W-1,x+r);b[o+x]=s/(h-l+1)}}}
@@ -149,8 +149,15 @@ $('bo').onclick=async()=>{$('bo').disabled=true;$('ocr').textContent='Lecture en
  $('bo').disabled=false;$('cr').classList.add('hide');$('ed').classList.remove('hide');
  if(best.conf<0){cur.mode='Manuel (lecture photo échouée)';$('ocr').textContent="⚠ Lecture impossible : saisissez le texte à la main (ce sera noté dans l'historique).";$('tx').value=''}
  else{cur.mode='Photo';cur.ocr=best.text;$('ocr').textContent=`Lecture terminée (confiance ${Math.round(best.conf)} %). Vérifiez et corrigez si besoin.`;$('tx').value=best.text}
- $('tx').focus()};
+ fillCmp(cropURL(),'Zone encadrée');$('cmp').scrollIntoView({behavior:'smooth',block:'start'})};
 
+function expText(){const t=typ();if(!t)return'';const c=calc(t),n=new Date(),hm=p2(n.getHours())+':'+p2(n.getMinutes());
+ return t.tpl?t.tpl.replace(/\{DATE\}/g,c.date).replace(/\{LOT\}/g,c.lot).replace(/\{HEURE\}/g,hm).replace(/\{\*\}/g,' … '):((c.date?c.date+'\n':'')+c.lot+(t.heure?' '+hm:''))}
+function cropURL(){const r=sel||{x:0,y:0,w:img.width,h:img.height},k=Math.min(1,900/r.w),c=document.createElement('canvas');c.width=Math.round(r.w*k);c.height=Math.round(r.h*k);c.getContext('2d').drawImage(img,r.x,r.y,r.w,r.h,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.85)}
+function fillCmp(src,lab){const o=$('cmp');o.innerHTML='';const mk=(tag,cls,txt,st)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt)e.textContent=txt;if(st)e.style.cssText=st;return e};
+ const i=mk('img','','','width:100%;border-radius:6px;border:1px solid var(--bd)');i.src=src;
+ o.append(mk('div','m','① Ce que vous devez avoir'),mk('div','pv',expText()),mk('div','m','② '+lab,'margin-top:10px'),i,mk('div','m',"③ Ce que l'application lit :",'margin:10px 0 4px'))}
+$('bb').onclick=()=>{if(!img)return;$('ed').classList.add('hide');$('cr').classList.remove('hide');draw()};
 /* Comparaison à l'image attendue (OCV, expérimental) */
 const FT={' ':'0000000000','0':'3E5149453E','1':'00427F4000','2':'4261514946','3':'2141454B31','4':'1814127F10','5':'2745454539','6':'3C4A494930','7':'0171090503','8':'3649494936','9':'064949291E',':':'0036360000','/':'2010080402','.':'0060600000','-':'0808080808','#':'147F147F14','°':'0007050700','&':'3649552250',',':'0050300000','A':'7E1111117E','B':'7F49494936','C':'3E41414122','D':'7F4141221C','E':'7F49494941','F':'7F09090901','G':'3E4149497A','H':'7F0808087F','I':'00417F4100','J':'2040413F01','K':'7F08142241','L':'7F40404040','M':'7F020C027F','N':'7F0408107F','O':'3E4141413E','P':'7F09090906','Q':'3E4151215E','R':'7F09192946','S':'4649494931','T':'01017F0101','U':'3F4040403F','V':'1F2040201F','W':'3F4038403F','X':'6314081463','Y':'0708700807','Z':'6151494543'};
 const GL={};for(const k in FT)GL[k]=[0,1,2,3,4].map(i=>parseInt(FT[k].substr(i*2,2),16));
