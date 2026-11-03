@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Contrôle marquage</title>
+<title>Contrôle marquage (comparaison image)</title>
 <link rel="manifest" href="manifest.json"><meta name="theme-color" content="#5b3a29">
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
@@ -39,10 +39,10 @@ button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}b
 <div id="ocr" class="m"></div>
 <div id="cr" class="hide"><div class="m" style="margin:8px 0 4px">Entourez du doigt la zone du marquage (sans le décor)</div>
 <canvas id="cv" style="width:100%;touch-action:none;border-radius:8px;display:block"></canvas>
-<div class="r"><button id="bo">🔍 Lire la zone</button><button id="bs" class="s">Saisir à la main</button></div></div>
+<div class="r"><button id="bo">🔍 Lire la zone</button><button id="bs" class="s">Saisir à la main</button></div><button id="bk" class="s">🧪 Comparer à l'image attendue (sans lecture)</button></div>
 <div id="ed" class="hide"><label>Texte lu (corrigez si besoin)</label><textarea id="tx" rows="4" class="k"></textarea>
 <button id="bv">Vérifier et enregistrer</button></div>
-<div id="out" style="margin-top:10px"></div></div>
+<div id="ov" class="hide"></div><div id="out" style="margin-top:10px"></div></div>
 
 <div class="c"><h2>Historique</h2>
 <div class="r"><button id="be" class="s">Exporter tout (Excel)</button><button id="bc" class="s">Exporter non exportés</button></div>
@@ -73,7 +73,7 @@ $('xl').onchange=async e=>{
   T[g(1)]={dur:parseInt(g(2))||0,fmt:g(3)==='/'?'':g(3),pre:g(4),heure:g(5).toLowerCase()==='oui',tpl:r.getCell(6).text||''}});
  wb.getWorksheet('Produits').eachRow((r,i)=>{if(i<2)return;const n=(r.getCell(1).text||'').trim(),t=(r.getCell(2).text||'').trim();if(n)P.push({n,t})});
  DB={types:T,prods:P,file:f.name,maj:new Date().toLocaleString('fr-FR')};
- localStorage.setItem('db',JSON.stringify(DB));ui()}catch(err){$('xs').textContent='Erreur de lecture : '+err.message}};
+ localStorage.setItem('db',JSON.stringify(DB));ui()}catch(err){$('xs').textContent='Erreur de lecture ('+f.size+" octets) : "+err.message+". Le fichier est incomplet ou n'est pas un vrai .xlsx : retéléchargez-le (environ 13 Ko) puis rechargez-le ici."}};
 function ui(){
  $('xs').textContent=DB.file?`${DB.file} — ${DB.prods.length} produits, ${Object.keys(DB.types).length} types (chargé le ${DB.maj})`:'Aucun fichier chargé';
  const s=$('pr');const v=s.value;s.innerHTML='<option value="">— choisir —</option>'+DB.prods.map(p=>`<option>${p.n}</option>`).join('');s.value=v;exp()}
@@ -99,7 +99,7 @@ $('pr').onchange=async()=>{const n=$('pr').value;
  if(prevProd&&n!==prevProd){const r=(await all()).filter(x=>x.prod===prevProd&&!x.exp);if(r.length&&confirm(`Changement de produit : exporter les ${r.length} contrôle(s) de « ${prevProd} » ?`))await exportX(r,'changement_'+prevProd)}
  prevProd=n;exp();reset()};
 $('op').oninput=()=>{try{localStorage.setItem('op',$('op').value)}catch(e){}};
-function reset(){cur={photo:null,mode:'Manuel'};$('ed').classList.add('hide');$('cr').classList.add('hide');$('tx').value='';$('out').innerHTML='';$('ocr').textContent=''}
+function reset(){cur={photo:null,mode:'Manuel'};$('ov').className='hide';$('ed').classList.add('hide');$('cr').classList.add('hide');$('tx').value='';$('out').innerHTML='';$('ocr').textContent=''}
 
 /* Photo + OCR */
 $('bi').onclick=()=>{if(!ok())return;$('ph2').click()};
@@ -143,6 +143,69 @@ $('bo').onclick=async()=>{$('bo').disabled=true;$('ocr').textContent='Lecture en
  if(best.conf<0){cur.mode='Manuel (lecture photo échouée)';$('ocr').textContent="⚠ Lecture impossible : saisissez le texte à la main (ce sera noté dans l'historique).";$('tx').value=''}
  else{cur.mode='Photo';cur.ocr=best.text;$('ocr').textContent=`Lecture terminée (confiance ${Math.round(best.conf)} %). Vérifiez et corrigez si besoin.`;$('tx').value=best.text}
  $('tx').focus()};
+
+/* Comparaison à l'image attendue (OCV, expérimental) */
+const FT={' ':'0000000000','0':'3E5149453E','1':'00427F4000','2':'4261514946','3':'2141454B31','4':'1814127F10','5':'2745454539','6':'3C4A494930','7':'0171090503','8':'3649494936','9':'064949291E',':':'0036360000','/':'2010080402','.':'0060600000','-':'0808080808','#':'147F147F14','°':'0007050700','&':'3649552250',',':'0050300000','A':'7E1111117E','B':'7F49494936','C':'3E41414122','D':'7F4141221C','E':'7F49494941','F':'7F09090901','G':'3E4149497A','H':'7F0808087F','I':'00417F4100','J':'2040413F01','K':'7F08142241','L':'7F40404040','M':'7F020C027F','N':'7F0408107F','O':'3E4141413E','P':'7F09090906','Q':'3E4151215E','R':'7F09192946','S':'4649494931','T':'01017F0101','U':'3F4040403F','V':'1F2040201F','W':'3F4038403F','X':'6314081463','Y':'0708700807','Z':'6151494543'};
+const GL={};for(const k in FT)GL[k]=[0,1,2,3,4].map(i=>parseInt(FT[k].substr(i*2,2),16));
+const SEUIL=75;
+function olines(t,c){let tpl=t.tpl||((c.date?'{DATE}\n':'')+'{LOT}'+(t.heure?' {HEURE}':''));
+ if(tpl.includes('{*}'))return null;
+ tpl=tpl.replace(/\{DATE\}/g,c.date).replace(/\{LOT\}/g,c.lot).replace(/\{HEURE\}/g,'\u0001'.repeat(5));
+ return tpl.split('\n').map(l=>[...l].map(ch=>{const u=ch.toUpperCase(),h=ch==='\u0001';return{ch:h?'·':ch,g:GL[u]||GL[' '],skip:h||!GL[u]}}))}
+function ocvCore(P,L){
+ let best=0,bs=-1;const st=2*Math.max(1,Math.floor(P.length/40000));
+ for(let a=-6;a<=6;a++){const s=Math.sin(a*Math.PI/180),h={};let sc=0;
+  for(let i=0;i<P.length;i+=st){const k=Math.round((P[i+1]+P[i]*s)/2);h[k]=(h[k]||0)+1}
+  for(const k in h)sc+=h[k]*h[k];if(sc>bs){bs=sc;best=a}}
+ const s=Math.sin(best*Math.PI/180),cs=Math.cos(best*Math.PI/180),X=[],Y=[];
+ for(let i=0;i<P.length;i+=2){X.push(P[i]*cs-P[i+1]*s);Y.push(P[i+1]*cs+P[i]*s)}
+ const pc=(A,q)=>[...A].sort((a,b)=>a-b)[Math.floor((A.length-1)*q)];
+ const x0=pc(X,.003),x1=pc(X,.997),y0=pc(Y,.003),y1=pc(Y,.997);
+ const nC=Math.max(...L.map(l=>l.length)),W=nC*6-1,H=L.length*9-2,cw=(x1-x0)/W,ch=(y1-y0)/H,cnt=new Float32Array(W*H);
+ for(let i=0;i<X.length;i++){const fx=(X[i]-x0)/cw,fy=(Y[i]-y0)/ch,gx=Math.floor(fx),gy=Math.floor(fy),ux=fx-gx,uy=fy-gy;
+  if(gx>=0&&gx<W&&gy>=0&&gy<H&&ux>.2&&ux<.8&&uy>.2&&uy<.8)cnt[gy*W+gx]++}
+ const ar=.36*cw*ch,d=cnt.map(v=>Math.min(1,v/ar)),mx=Math.max(...d);
+ if(mx<.05)return null;
+ const B=20,hb=new Array(B).fill(0);d.forEach(v=>hb[Math.min(B-1,Math.floor(v/mx*B))]++);
+ let tot=d.length,sum=0;hb.forEach((n,i)=>sum+=i*n);let wb=0,sb=0,mxv=-1,th=0;
+ for(let i=0;i<B;i++){wb+=hb[i];if(!wb)continue;const wf=tot-wb;if(!wf)break;sb+=i*hb[i];const m1=sb/wb,m2=(sum-sb)/wf,v=wb*wf*(m1-m2)**2;if(v>mxv){mxv=v;th=i}}
+ const thr=(th+1)/B*mx,on=d.map(v=>v>thr?1:0),exp=new Uint8Array(W*H),sc=[];
+ L.forEach((line,l)=>{sc.push(line.map((c,i)=>{let m=0;
+  for(let j=0;j<5;j++)for(let r=0;r<7;r++){const e=(c.g[j]>>r)&1,idx=(l*9+r)*W+i*6+j;exp[idx]=e;if(e===on[idx])m++}
+  return Math.round(m/35*100)}))});
+ return{W,H,on,exp,sc,angle:best}}
+function showOCV(R,L,t,c){
+ const cs=Math.max(3,Math.min(10,Math.floor(600/R.W))),cv=document.createElement('canvas');cv.width=R.W*cs;cv.height=R.H*cs;cv.style.cssText='width:100%;background:#fff;border-radius:6px;border:1px solid var(--bd)';
+ const x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,cv.width,cv.height);
+ const skipCell=(gx,gy)=>{const l=Math.floor(gy/9),i=Math.floor(gx/6);return L[l]&&L[l][i]&&L[l][i].skip};
+ for(let gy=0;gy<R.H;gy++)for(let gx=0;gx<R.W;gx++){const k=gy*R.W+gx,e=R.exp[k],g=R.on[k];if(!e&&!g)continue;
+  x.fillStyle=e&&g?'#1b7f3b':e?'#c0392b':skipCell(gx,gy)?'#999':'#2a6fdb';x.beginPath();x.arc((gx+.5)*cs,(gy+.5)*cs,cs*(e?.4:.25),0,7);x.fill()}
+ let mn=100,sum=0,n=0,bad=[];
+ const html=L.map((line,l)=>line.map((ch,i)=>{if(ch.skip)return `<span style="color:#999">${ch.ch}</span>`;const s=R.sc[l][i];mn=Math.min(mn,s);sum+=s;n++;if(s<SEUIL)bad.push(`ligne ${l+1}, car. ${i+1} « ${ch.ch} » : ${s} %`);
+  return `<span style="color:${s>=SEUIL?'var(--ok)':'var(--ko)'}" title="${s} %">${ch.ch}</span>`}).join('')).join('<br>');
+ const ok=n>0&&mn>=SEUIL;ocv={ok,mn,avg:Math.round(sum/Math.max(1,n)),txt:L.map(l=>l.map(c=>c.ch).join('')).join(' / ')};
+ const o=$('ov');o.className='';o.innerHTML=`<div class="res ${ok?'ok':'ko'}" style="margin-top:8px">Verdict auto : ${ok?'OK':'NON OK'}</div><div class="m" style="margin:6px 0">Plus faible caractère : ${mn} % · moyenne ${ocv.avg} % · seuil ${SEUIL} %</div><div class="m">Vert = point attendu trouvé · rouge = point attendu absent · bleu = point en trop</div>`;
+ o.appendChild(cv);const d=document.createElement('div');d.className='k';d.style.cssText='font-size:20px;margin:8px 0';d.innerHTML=html;o.appendChild(d);
+ if(bad.length){const b=document.createElement('div');b.className='m';b.textContent='À regarder : '+bad.slice(0,6).join(' ; ');o.appendChild(b)}
+ if(t.heure){const b=document.createElement('div');b.className='m';b.textContent=`Heure (·····) non comparée : vérifiez visuellement qu'elle est à ±10 min de ${p2(new Date().getHours())}:${p2(new Date().getMinutes())}.`;o.appendChild(b)}
+ o.insertAdjacentHTML('beforeend','<div class="r"><button id="dy">✅ Conforme</button><button id="dn" style="background:var(--ko)">❌ Non conforme</button></div>');
+ $('dy').onclick=()=>decide(true,t,c);$('dn').onclick=()=>decide(false,t,c)}
+async function decide(good,t,c){
+ const why=[];if(ocv.ok!==good)why.push(`Décision opérateur différente du verdict auto (${ocv.ok?'OK':'NON OK'})`);
+ if(!good)why.push("Jugé non conforme par l'opérateur");
+ const rec={ts:new Date().toISOString(),op:$('op').value.trim(),prod:$('pr').value,type:t.name,lot:c.lot,date:c.date,txt:ocv.txt,res:good?'OK':'NON OK',why:why.join(' ; '),mode:`Comparaison image (auto ${ocv.ok?'OK':'NON OK'}, mini ${ocv.mn} %, moy. ${ocv.avg} %)`,photo:cur.photo||'',exp:false};
+ await put(rec);$('ov').innerHTML=`<div class="res ${good?'ok':'ko'}">${good?'OK':'NON OK'} enregistré</div>`;hist();$('cr').classList.add('hide')}
+let ocv=null;
+function ptsDark(){const r=sel||{x:0,y:0,w:img.width,h:img.height},k=Math.min(1,1000/r.w),W=Math.round(r.w*k),H=Math.round(r.h*k),c=document.createElement('canvas');c.width=W;c.height=H;
+ const x=c.getContext('2d');x.drawImage(img,r.x,r.y,r.w,r.h,0,0,W,H);const d=x.getImageData(0,0,W,H).data,n=W*H,g=new Uint8Array(n),s=new Uint8Array(n),P=[];
+ for(let i=0;i<n;i++)s[i]=g[i]=.3*d[4*i]+.59*d[4*i+1]+.11*d[4*i+2];
+ s.sort();const lo=s[Math.floor(n*.02)],hi=s[Math.floor(n*.55)],th=lo+(hi-lo)*.5;
+ for(let i=0;i<n;i++)if(g[i]<th)P.push(i%W,Math.floor(i/W));return P}
+$('bk').onclick=()=>{if(!ok())return;const t=typ(),c=calc(t),L=olines(t,c);
+ if(!L){alert('Ce type contient {*} (texte variable) : comparaison impossible. Utilisez la lecture ou la saisie.');return}
+ const P=ptsDark();if(P.length<200){alert('Aucun marquage détecté : recadrez plus près.');return}
+ const R=ocvCore(P,L);if(!R){alert('Points non détectés : recadrez plus près.');return}
+ cur.mode='Comparaison image';showOCV(R,L,t,c)};
 
 /* Vérification */
 const esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
