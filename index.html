@@ -147,65 +147,91 @@ $('bo').onclick=async()=>{$('bo').disabled=true;$('ocr').textContent='Lecture en
 /* Comparaison à l'image attendue (OCV, expérimental) */
 const FT={' ':'0000000000','0':'3E5149453E','1':'00427F4000','2':'4261514946','3':'2141454B31','4':'1814127F10','5':'2745454539','6':'3C4A494930','7':'0171090503','8':'3649494936','9':'064949291E',':':'0036360000','/':'2010080402','.':'0060600000','-':'0808080808','#':'147F147F14','°':'0007050700','&':'3649552250',',':'0050300000','A':'7E1111117E','B':'7F49494936','C':'3E41414122','D':'7F4141221C','E':'7F49494941','F':'7F09090901','G':'3E4149497A','H':'7F0808087F','I':'00417F4100','J':'2040413F01','K':'7F08142241','L':'7F40404040','M':'7F020C027F','N':'7F0408107F','O':'3E4141413E','P':'7F09090906','Q':'3E4151215E','R':'7F09192946','S':'4649494931','T':'01017F0101','U':'3F4040403F','V':'1F2040201F','W':'3F4038403F','X':'6314081463','Y':'0708700807','Z':'6151494543'};
 const GL={};for(const k in FT)GL[k]=[0,1,2,3,4].map(i=>parseInt(FT[k].substr(i*2,2),16));
-const SEUIL=75;
+const SEUIL=75;let ocv=null,GR=null,OS=null;
 function olines(t,c){let tpl=t.tpl||((c.date?'{DATE}\n':'')+'{LOT}'+(t.heure?' {HEURE}':''));
  if(tpl.includes('{*}'))return null;
  tpl=tpl.replace(/\{DATE\}/g,c.date).replace(/\{LOT\}/g,c.lot).replace(/\{HEURE\}/g,'\u0001'.repeat(5));
  return tpl.split('\n').map(l=>[...l].map(ch=>{const u=ch.toUpperCase(),h=ch==='\u0001';return{ch:h?'·':ch,g:GL[u]||GL[' '],skip:h||!GL[u]}}))}
-function ocvCore(P,L){
+function ocvCore(P,L,o){
  let best=0,bs=-1;const st=2*Math.max(1,Math.floor(P.length/40000));
  for(let a=-6;a<=6;a++){const s=Math.sin(a*Math.PI/180),h={};let sc=0;
   for(let i=0;i<P.length;i+=st){const k=Math.round((P[i+1]+P[i]*s)/2);h[k]=(h[k]||0)+1}
   for(const k in h)sc+=h[k]*h[k];if(sc>bs){bs=sc;best=a}}
- const s=Math.sin(best*Math.PI/180),cs=Math.cos(best*Math.PI/180),X=[],Y=[];
- for(let i=0;i<P.length;i+=2){X.push(P[i]*cs-P[i+1]*s);Y.push(P[i+1]*cs+P[i]*s)}
- const pc=(A,q)=>[...A].sort((a,b)=>a-b)[Math.floor((A.length-1)*q)];
- const x0=pc(X,.003),x1=pc(X,.997),y0=pc(Y,.003),y1=pc(Y,.997);
- const nC=Math.max(...L.map(l=>l.length)),W=nC*6-1,H=L.length*9-2,cw=(x1-x0)/W,ch=(y1-y0)/H,cnt=new Float32Array(W*H);
- for(let i=0;i<X.length;i++){const fx=(X[i]-x0)/cw,fy=(Y[i]-y0)/ch,gx=Math.floor(fx),gy=Math.floor(fy),ux=fx-gx,uy=fy-gy;
-  if(gx>=0&&gx<W&&gy>=0&&gy<H&&ux>.2&&ux<.8&&uy>.2&&uy<.8)cnt[gy*W+gx]++}
- const ar=.36*cw*ch,d=cnt.map(v=>Math.min(1,v/ar)),mx=Math.max(...d);
+ const sn=Math.sin(best*Math.PI/180),cs=Math.cos(best*Math.PI/180),X=[],Y=[];
+ for(let i=0;i<P.length;i+=2){X.push(P[i]*cs-P[i+1]*sn);Y.push(P[i+1]*cs+P[i]*sn)}
+ const ext=(A,gap,frac)=>{const m=new Map();for(const v of A){const k=Math.floor(v);m.set(k,(m.get(k)||0)+1)}
+  const mb=Math.max(...m.values()),ks=[...m.keys()].filter(k=>m.get(k)>=Math.max(3,.05*mb)).sort((a,b)=>a-b),cl=[];let cu=null;
+  for(const k of ks){if(cu&&k-cu.e<=gap){cu.e=k;cu.n+=m.get(k)}else{cu={s:k,e:k,n:m.get(k)};cl.push(cu)}}
+  const mx=Math.max(...cl.map(c=>c.n)),kp=cl.filter(c=>c.n>=frac*mx);return[kp[0].s,kp[kp.length-1].e+1]};
+ const[x0,x1]=ext(X,o.gap,.15),[y0,y1]=ext(Y,o.gap,.15);
+ const px=5+o.gx,py=7+o.gy,nC=Math.max(...L.map(l=>l.length)),W=nC*px-o.gx,H=L.length*py-o.gy;
+ const p=(y1-y0)/(H-.5),ch=p,yy0=y0-.25*p,exp=new Uint8Array(W*H),skp=new Uint8Array(W*H);
+ L.forEach((line,l)=>line.forEach((c,i)=>{for(let j=0;j<px;j++)for(let r=0;r<py;r++){const gx=i*px+j;if(gx>=W||l*py+r>=H)continue;const k=(l*py+r)*W+gx;
+  if(j<5&&r<7)exp[k]=(c.g[j]>>r)&1;if(c.skip)skp[k]=1}}));
+ const bin=(cw,xs,st)=>{const c=new Float32Array(W*H);for(let i=0;i<X.length;i+=st){const fx=(X[i]-xs)/cw,fy=(Y[i]-yy0)/ch,gx=Math.floor(fx),gy=Math.floor(fy),ux=fx-gx,uy=fy-gy;
+  if(gx>=0&&gx<W&&gy>=0&&gy<H&&ux>.15&&ux<.85&&uy>.15&&uy<.85)c[gy*W+gx]+=st}return c};
+ let bcw=ch*o.ratio,bx0=x0-.25*bcw,bm=-1e9;const sst=Math.max(1,Math.floor(X.length/30000));
+ for(let sf=.92;sf<=1.081;sf+=.01)for(let dx=-.5;dx<=.51;dx+=.125){const cw=ch*o.ratio*sf,xs=x0-.25*cw+dx*cw,c=bin(cw,xs,sst),a=.49*cw*ch;let m=0;
+  for(let k=0;k<c.length;k++){if(skp[k])continue;const v=Math.min(1,c[k]/a);m+=exp[k]?v:-v}if(m>bm){bm=m;bcw=cw;bx0=xs}}
+ const cw=bcw,cnt=bin(cw,bx0,1),ar=.49*cw*ch,d=cnt.map(v=>Math.min(1,v/ar)),mx=Math.max(...d);
  if(mx<.05)return null;
  const B=20,hb=new Array(B).fill(0);d.forEach(v=>hb[Math.min(B-1,Math.floor(v/mx*B))]++);
  let tot=d.length,sum=0;hb.forEach((n,i)=>sum+=i*n);let wb=0,sb=0,mxv=-1,th=0;
  for(let i=0;i<B;i++){wb+=hb[i];if(!wb)continue;const wf=tot-wb;if(!wf)break;sb+=i*hb[i];const m1=sb/wb,m2=(sum-sb)/wf,v=wb*wf*(m1-m2)**2;if(v>mxv){mxv=v;th=i}}
- const thr=(th+1)/B*mx,on=d.map(v=>v>thr?1:0),exp=new Uint8Array(W*H),sc=[];
+ const thr=th/B*mx+.5/B*mx,on=d.map(v=>v>thr?1:0),sc=[];
  L.forEach((line,l)=>{sc.push(line.map((c,i)=>{let m=0;
-  for(let j=0;j<5;j++)for(let r=0;r<7;r++){const e=(c.g[j]>>r)&1,idx=(l*9+r)*W+i*6+j;exp[idx]=e;if(e===on[idx])m++}
+  for(let j=0;j<5;j++)for(let r=0;r<7;r++){const idx=(l*py+r)*W+i*px+j;if(exp[idx]===on[idx])m++}
   return Math.round(m/35*100)}))});
- return{W,H,on,exp,sc,angle:best}}
-function showOCV(R,L,t,c){
- const cs=Math.max(3,Math.min(10,Math.floor(600/R.W))),cv=document.createElement('canvas');cv.width=R.W*cs;cv.height=R.H*cs;cv.style.cssText='width:100%;background:#fff;border-radius:6px;border:1px solid var(--bd)';
- const x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,cv.width,cv.height);
- const skipCell=(gx,gy)=>{const l=Math.floor(gy/9),i=Math.floor(gx/6);return L[l]&&L[l][i]&&L[l][i].skip};
+ return{W,H,on,exp,sc,angle:best,x0:bx0,y0:yy0,cw,ch,cs,sn,px,py,Wd:Math.max(W,(x1-bx0)/cw)}}
+function grayInit(){const r=sel||{x:0,y:0,w:img.width,h:img.height},k=Math.min(2.5,1200/r.w),W=Math.round(r.w*k),H=Math.round(r.h*k),c=document.createElement('canvas');c.width=W;c.height=H;
+ const x=c.getContext('2d');x.drawImage(img,r.x,r.y,r.w,r.h,0,0,W,H);const d=x.getImageData(0,0,W,H).data,n=W*H,g=new Uint8Array(n),s=new Uint8Array(n);
+ for(let i=0;i<n;i++)s[i]=g[i]=.3*d[4*i]+.59*d[4*i+1]+.11*d[4*i+2];
+ s.sort();GR={g,W,H,n,c,k,lo:s[Math.floor(n*.02)],hi:s[Math.floor(n*.55)]}}
+function ptsDark(sens){const{g,W,n,lo,hi}=GR,th=lo+(hi-lo)*sens,P=[];for(let i=0;i<n;i++)if(g[i]<th)P.push(i%W,Math.floor(i/W));return P}
+function showOCV(){
+ const o=$('ov');o.className='';
+ o.innerHTML=`<div id="o1"></div><div class="m" style="margin:6px 0">Vert = point attendu trouvé · rouge = point attendu absent · bleu = point en trop</div>
+<div id="o2" style="position:relative"></div><button id="ovt" class="s">👁 Masquer les points (image d'origine)</button>
+<div id="o3" class="k" style="font-size:20px;margin:8px 0"></div><div id="o4" class="m"></div>
+<div class="c" style="margin:10px 0 0"><h2>Réglages</h2>
+<label>Sensibilité de détection des points : <b id="v1"></b></label><input type="range" id="rs" min="30" max="85" value="55">
+<label>Largeur des lettres du modèle : <b id="v2"></b></label><input type="range" id="rw" min="50" max="170" value="100">
+<label>Écart entre lettres (colonnes de points)</label><select id="rg"><option>1</option><option>2</option><option>3</option></select>
+<label>Écart entre lignes (rangées de points)</label><select id="rl"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></div>
+<div class="r"><button id="dy">✅ Conforme</button><button id="dn" style="background:var(--ko)">❌ Non conforme</button></div>`;
+ let hid=false;$('ovt').onclick=()=>{hid=!hid;const v=$('o2').children[1];if(v)v.style.display=hid?'none':'block';$('ovt').textContent=hid?'👁 Afficher les points':"👁 Masquer les points (image d'origine)"};
+ ['rs','rw','rg','rl'].forEach(i=>$(i).oninput=()=>{hid=false;$('ovt').textContent="👁 Masquer les points (image d'origine)";updOCV()});
+ $('dy').onclick=()=>decide(true);$('dn').onclick=()=>decide(false);updOCV()}
+function updOCV(){const{L,t,c}=OS,sens=$('rs').value/100,ratio=$('rw').value/100;
+ $('v1').textContent=Math.round(sens*100)+' %';$('v2').textContent=Math.round(ratio*100)+' %';
+ const P=ptsDark(sens),R=P.length>=200?ocvCore(P,L,{gx:+$('rg').value,gy:+$('rl').value,ratio,gap:Math.round(12*GR.k)}):null;
+ if(!R){$('o1').innerHTML='<div class="res ko">Points non détectés</div>';$('o2').innerHTML='';$('o3').textContent='';$('o4').textContent='Recadrez plus près ou augmentez la sensibilité.';ocv=null;return}
+ const cs=Math.max(4,Math.min(12,Math.floor(900/R.Wd))),w=Math.round(R.Wd*cs),h=Math.round(R.H*cs);
+ const base=document.createElement('canvas'),ov=document.createElement('canvas');
+ for(const k of [base,ov]){k.width=w;k.height=h;k.style.cssText='width:100%;display:block;border-radius:6px'}
+ ov.style.cssText+=';position:absolute;top:0;left:0';base.style.border='1px solid var(--bd)';
+ const bx=base.getContext('2d');bx.fillStyle='#fff';bx.fillRect(0,0,w,h);bx.save();bx.scale(cs/R.cw,cs/R.ch);bx.translate(-R.x0,-R.y0);
+ bx.transform(Math.cos(R.angle*Math.PI/180),R.sn,-R.sn,Math.cos(R.angle*Math.PI/180),0,0);bx.drawImage(GR.c,0,0);bx.restore();
+ const x=ov.getContext('2d');x.globalAlpha=.85;
+ const skipCell=(gx,gy)=>{const l=Math.floor(gy/R.py),i=Math.floor(gx/R.px);return L[l]&&L[l][i]&&L[l][i].skip};
  for(let gy=0;gy<R.H;gy++)for(let gx=0;gx<R.W;gx++){const k=gy*R.W+gx,e=R.exp[k],g=R.on[k];if(!e&&!g)continue;
-  x.fillStyle=e&&g?'#1b7f3b':e?'#c0392b':skipCell(gx,gy)?'#999':'#2a6fdb';x.beginPath();x.arc((gx+.5)*cs,(gy+.5)*cs,cs*(e?.4:.25),0,7);x.fill()}
+  x.fillStyle=e&&g?'#1b7f3b':e?'#c0392b':skipCell(gx,gy)?'#999':'#2a6fdb';x.beginPath();x.arc((gx+.5)*cs,(gy+.5)*cs,cs*(e?.38:.22),0,7);x.fill()}
+ $('o2').innerHTML='';$('o2').append(base,ov);
  let mn=100,sum=0,n=0,bad=[];
- const html=L.map((line,l)=>line.map((ch,i)=>{if(ch.skip)return `<span style="color:#999">${ch.ch}</span>`;const s=R.sc[l][i];mn=Math.min(mn,s);sum+=s;n++;if(s<SEUIL)bad.push(`ligne ${l+1}, car. ${i+1} « ${ch.ch} » : ${s} %`);
+ $('o3').innerHTML=L.map((line,l)=>line.map((ch,i)=>{if(ch.skip)return `<span style="color:#999">${ch.ch}</span>`;const s=R.sc[l][i];mn=Math.min(mn,s);sum+=s;n++;if(s<SEUIL)bad.push(`ligne ${l+1}, car. ${i+1} « ${ch.ch} » : ${s} %`);
   return `<span style="color:${s>=SEUIL?'var(--ok)':'var(--ko)'}" title="${s} %">${ch.ch}</span>`}).join('')).join('<br>');
  const ok=n>0&&mn>=SEUIL;ocv={ok,mn,avg:Math.round(sum/Math.max(1,n)),txt:L.map(l=>l.map(c=>c.ch).join('')).join(' / ')};
- const o=$('ov');o.className='';o.innerHTML=`<div class="res ${ok?'ok':'ko'}" style="margin-top:8px">Verdict auto : ${ok?'OK':'NON OK'}</div><div class="m" style="margin:6px 0">Plus faible caractère : ${mn} % · moyenne ${ocv.avg} % · seuil ${SEUIL} %</div><div class="m">Vert = point attendu trouvé · rouge = point attendu absent · bleu = point en trop</div>`;
- o.appendChild(cv);const d=document.createElement('div');d.className='k';d.style.cssText='font-size:20px;margin:8px 0';d.innerHTML=html;o.appendChild(d);
- if(bad.length){const b=document.createElement('div');b.className='m';b.textContent='À regarder : '+bad.slice(0,6).join(' ; ');o.appendChild(b)}
- if(t.heure){const b=document.createElement('div');b.className='m';b.textContent=`Heure (·····) non comparée : vérifiez visuellement qu'elle est à ±10 min de ${p2(new Date().getHours())}:${p2(new Date().getMinutes())}.`;o.appendChild(b)}
- o.insertAdjacentHTML('beforeend','<div class="r"><button id="dy">✅ Conforme</button><button id="dn" style="background:var(--ko)">❌ Non conforme</button></div>');
- $('dy').onclick=()=>decide(true,t,c);$('dn').onclick=()=>decide(false,t,c)}
-async function decide(good,t,c){
+ $('o1').innerHTML=`<div class="res ${ok?'ok':'ko'}" style="margin-top:8px">Verdict auto : ${ok?'OK':'NON OK'}</div><div class="m" style="margin:6px 0">Plus faible caractère : ${mn} % · moyenne ${ocv.avg} % · seuil ${SEUIL} %</div>`;
+ const hm=p2(new Date().getHours())+':'+p2(new Date().getMinutes());
+ $('o4').textContent=(bad.length?'À regarder : '+bad.slice(0,6).join(' ; ')+'. ':'')+(t.heure?`Heure (·····) non comparée : vérifiez qu'elle est à ±10 min de ${hm}.`:'')}
+async function decide(good){if(!ocv)return;const{t,c}=OS;
  const why=[];if(ocv.ok!==good)why.push(`Décision opérateur différente du verdict auto (${ocv.ok?'OK':'NON OK'})`);
  if(!good)why.push("Jugé non conforme par l'opérateur");
  const rec={ts:new Date().toISOString(),op:$('op').value.trim(),prod:$('pr').value,type:t.name,lot:c.lot,date:c.date,txt:ocv.txt,res:good?'OK':'NON OK',why:why.join(' ; '),mode:`Comparaison image (auto ${ocv.ok?'OK':'NON OK'}, mini ${ocv.mn} %, moy. ${ocv.avg} %)`,photo:cur.photo||'',exp:false};
  await put(rec);$('ov').innerHTML=`<div class="res ${good?'ok':'ko'}">${good?'OK':'NON OK'} enregistré</div>`;hist();$('cr').classList.add('hide')}
-let ocv=null;
-function ptsDark(){const r=sel||{x:0,y:0,w:img.width,h:img.height},k=Math.min(1,1000/r.w),W=Math.round(r.w*k),H=Math.round(r.h*k),c=document.createElement('canvas');c.width=W;c.height=H;
- const x=c.getContext('2d');x.drawImage(img,r.x,r.y,r.w,r.h,0,0,W,H);const d=x.getImageData(0,0,W,H).data,n=W*H,g=new Uint8Array(n),s=new Uint8Array(n),P=[];
- for(let i=0;i<n;i++)s[i]=g[i]=.3*d[4*i]+.59*d[4*i+1]+.11*d[4*i+2];
- s.sort();const lo=s[Math.floor(n*.02)],hi=s[Math.floor(n*.55)],th=lo+(hi-lo)*.5;
- for(let i=0;i<n;i++)if(g[i]<th)P.push(i%W,Math.floor(i/W));return P}
 $('bk').onclick=()=>{if(!ok())return;const t=typ(),c=calc(t),L=olines(t,c);
  if(!L){alert('Ce type contient {*} (texte variable) : comparaison impossible. Utilisez la lecture ou la saisie.');return}
- const P=ptsDark();if(P.length<200){alert('Aucun marquage détecté : recadrez plus près.');return}
- const R=ocvCore(P,L);if(!R){alert('Points non détectés : recadrez plus près.');return}
- cur.mode='Comparaison image';showOCV(R,L,t,c)};
+ grayInit();OS={L,t,c};cur.mode='Comparaison image';showOCV()};
 
 /* Vérification */
 const esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
