@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Contrôle marquage</title>
+<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#5b3a29">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+<style>
+:root{--bg:#faf7f4;--card:#fff;--tx:#241a14;--mu:#7a6a60;--ac:#5b3a29;--ok:#1b7f3b;--ko:#c0392b;--bd:#e3d9d1}
+@media(prefers-color-scheme:dark){:root{--bg:#171210;--card:#241c18;--tx:#f3ece6;--mu:#a89a90;--ac:#c8946f;--bd:#3a2f29}}
+*{box-sizing:border-box}body{margin:0;font:16px system-ui,Arial;background:var(--bg);color:var(--tx);padding:12px;max-width:640px;margin:auto}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:12px}
+h1{font-size:19px;margin:4px 0 12px}h2{font-size:15px;margin:0 0 8px;color:var(--ac)}
+label{display:block;font-size:13px;color:var(--mu);margin:8px 0 3px}
+input,select,textarea,button{font:inherit;width:100%;padding:10px;border-radius:8px;border:1px solid var(--bd);background:var(--bg);color:var(--tx)}
+button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}button.s{background:transparent;color:var(--ac);border:1px solid var(--ac)}
+.r{display:flex;gap:8px}.r>*{flex:1}.m{font-size:13px;color:var(--mu)}.k{font-family:ui-monospace,monospace;white-space:pre-wrap}
+.res{font-size:22px;font-weight:700;padding:10px;border-radius:8px;text-align:center;color:#fff}.ok{background:var(--ok)}.ko{background:var(--ko)}
+.h{display:flex;gap:8px;border-top:1px solid var(--bd);padding:8px 0;font-size:13px}.h img{width:48px;height:48px;object-fit:cover;border-radius:6px}
+.hide{display:none}
+</style></head><body>
+<h1>Contrôle marquage carton</h1>
+
+<div class="c"><h2>1. Fichier Excel</h2>
+<input type="file" id="xl" accept=".xlsx"><div class="m" id="xs">Aucun fichier chargé</div></div>
+
+<div class="c"><h2>2. Opérateur et produit</h2>
+<label>Nom de l'opérateur</label><input id="op" autocomplete="name">
+<label>Produit</label><select id="pr"><option value="">— choisir —</option></select>
+<div id="exp" class="m k" style="margin-top:8px"></div></div>
+
+<div class="c" id="ctl"><h2>3. Contrôle</h2>
+<div class="r"><button id="bp">📷 Photo</button><button id="bm" class="s">⌨️ Saisie manuelle</button></div>
+<input type="file" id="ph" accept="image/*" capture="environment" class="hide">
+<div id="ocr" class="m"></div>
+<div id="ed" class="hide"><label>Texte lu (corrigez si besoin)</label><textarea id="tx" rows="4" class="k"></textarea>
+<button id="bv">Vérifier et enregistrer</button></div>
+<div id="out" style="margin-top:10px"></div></div>
+
+<div class="c"><h2>Historique</h2>
+<div class="r"><button id="be" class="s">Exporter tout (Excel)</button><button id="bc" class="s">Exporter non exportés</button></div>
+<div id="hs"></div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const MOIS=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+const p2=n=>String(n).padStart(2,'0');
+let DB={types:{},prods:[]},cur={photo:null,mode:'Manuel'},prevProd='',idb;
+try{DB=JSON.parse(localStorage.getItem('db'))||DB}catch(e){}
+try{$('op').value=localStorage.getItem('op')||''}catch(e){}
+
+/* IndexedDB historique */
+const open=indexedDB.open('marquage',1);
+open.onupgradeneeded=()=>open.result.createObjectStore('h',{keyPath:'id',autoIncrement:true});
+open.onsuccess=()=>{idb=open.result;hist()};
+const tx=(m)=>idb.transaction('h',m).objectStore('h');
+const all=()=>new Promise(r=>{const q=tx('readonly').getAll();q.onsuccess=()=>r(q.result)});
+const put=o=>new Promise(r=>{const q=tx('readwrite').put(o);q.onsuccess=()=>r()});
+
+/* Lecture Excel */
+$('xl').onchange=async e=>{
+ const f=e.target.files[0];if(!f)return;
+ try{const wb=new ExcelJS.Workbook();await wb.xlsx.load(await f.arrayBuffer());
+ const T={},P=[];
+ wb.getWorksheet('Types de marquage').eachRow((r,i)=>{if(i<2)return;const g=n=>(r.getCell(n).text||'').trim();if(!g(1))return;
+  T[g(1)]={dur:parseInt(g(2))||0,fmt:g(3)==='/'?'':g(3),pre:g(4),heure:g(5).toLowerCase()==='oui',tpl:r.getCell(6).text||''}});
+ wb.getWorksheet('Produits').eachRow((r,i)=>{if(i<2)return;const n=(r.getCell(1).text||'').trim(),t=(r.getCell(2).text||'').trim();if(n)P.push({n,t})});
+ DB={types:T,prods:P,file:f.name,maj:new Date().toLocaleString('fr-FR')};
+ localStorage.setItem('db',JSON.stringify(DB));ui()}catch(err){$('xs').textContent='Erreur de lecture : '+err.message}};
+function ui(){
+ $('xs').textContent=DB.file?`${DB.file} — ${DB.prods.length} produits, ${Object.keys(DB.types).length} types (chargé le ${DB.maj})`:'Aucun fichier chargé';
+ const s=$('pr');const v=s.value;s.innerHTML='<option value="">— choisir —</option>'+DB.prods.map(p=>`<option>${p.n}</option>`).join('');s.value=v;exp()}
+
+/* Calcul du lot et de la date attendus */
+function calc(t,now=new Date()){
+ const d=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+ if(now.getHours()>=19)d.setDate(d.getDate()+1); // le n° du jour passe au lendemain à 19h
+ const doy=Math.round((d-new Date(d.getFullYear(),0,0))/864e5);
+ const lot=(t.pre||'')+(d.getFullYear()%10)+String(doy).padStart(3,'0')+'R';
+ let date='';
+ if(t.fmt&&t.dur){const e=new Date(d.getFullYear(),d.getMonth()+t.dur,1);
+  e.setDate(Math.min(d.getDate(),new Date(e.getFullYear(),e.getMonth()+1,0).getDate()));
+  date=t.fmt.replace(/AAAA|MMM|MM|JJ|AA/g,k=>({AAAA:e.getFullYear(),MMM:MOIS[e.getMonth()],MM:p2(e.getMonth()+1),JJ:p2(e.getDate()),AA:p2(e.getFullYear()%100)})[k])}
+ return{lot,date}}
+const typ=()=>{const p=DB.prods.find(x=>x.n===$('pr').value);return p?{name:p.t,...DB.types[p.t]}:null};
+function exp(){const t=typ();if(!t||!t.tpl&&!t.fmt&&t.dur===undefined){$('exp').textContent=t?`Type « ${t.name} » introuvable dans le fichier`:'';return}
+ const c=calc(t);$('exp').textContent=`Type : ${t.name}\nLot attendu : ${c.lot}\nDate attendue : ${c.date||'—'}\nHeure contrôlée : ${t.heure?'oui (±10 min)':'non'}`+(t.tpl?'':'\n⚠ Texte modèle non renseigné : seuls date et lot seront contrôlés')}
+$('pr').onchange=async()=>{const n=$('pr').value;
+ if(prevProd&&n!==prevProd){const r=(await all()).filter(x=>x.prod===prevProd&&!x.exp);if(r.length&&confirm(`Changement de produit : exporter les ${r.length} contrôle(s) de « ${prevProd} » ?`))await exportX(r,'changement_'+prevProd)}
+ prevProd=n;exp();reset()};
+$('op').oninput=()=>{try{localStorage.setItem('op',$('op').value)}catch(e){}};
+function reset(){cur={photo:null,mode:'Manuel'};$('ed').classList.add('hide');$('tx').value='';$('out').innerHTML='';$('ocr').textContent=''}
+
+/* Photo + OCR */
+$('bp').onclick=()=>{if(!ok())return;$('ph').click()};
+$('bm').onclick=()=>{if(!ok())return;reset();$('ed').classList.remove('hide');$('tx').focus()};
+function ok(){if(!$('op').value.trim()){alert("Saisissez le nom de l'opérateur");return false}if(!typ()){alert('Choisissez un produit (et chargez le fichier Excel)');return false}return true}
+function shrink(f){return new Promise(r=>{const i=new Image();i.onload=()=>{const k=Math.min(1,1000/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);r(c.toDataURL('image/jpeg',.8))};i.src=URL.createObjectURL(f)})}
+$('ph').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+ reset();cur.photo=await shrink(f);$('ocr').textContent='Lecture en cours…';$('ed').classList.remove('hide');
+ let txt='';
+ try{const w=await Tesseract.createWorker('eng',1,{langPath:'https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng/4.0.0_best_int'});
+  txt=(await w.recognize(cur.photo)).data.text.trim();await w.terminate()}catch(err){}
+ if(txt.replace(/\s/g,'').length<6){cur.mode='Manuel (lecture photo échouée)';$('ocr').textContent='⚠ Lecture impossible : saisissez le texte manuellement (sera noté dans l\'historique).'}
+ else{cur.mode='Photo';cur.ocr=txt;$('ocr').textContent='Lecture terminée. Vérifiez le texte ci-dessous.'}
+ $('tx').value=txt};
+
+/* Vérification */
+const esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+const norm=s=>s.toUpperCase().replace(/\s+/g,' ').trim();
+function verify(t,txt){
+ const c=calc(t),why=[],T=norm(txt);let heure='';
+ if(c.date&&!T.includes(c.date.toUpperCase()))why.push(`Date attendue « ${c.date} » introuvable`);
+ if(!T.includes(c.lot))why.push(`Lot attendu « ${c.lot} » introuvable`);
+ if(t.heure){const m=T.match(/(\d{1,2})\s*[:;.H]\s*(\d{2})/);
+  if(m){heure=`${m[1]}:${m[2]}`;const n=new Date(),a=n.getHours()*60+n.getMinutes(),b=+m[1]*60+ +m[2];let d=Math.abs(a-b);d=Math.min(d,1440-d);
+   if(d>10)why.push(`Heure ${heure} : écart de ${d} min avec l'appareil (max 10)`)}}
+ if(t.tpl&&!why.length){let r=esc(norm(t.tpl.replace(/\{DATE\}/g,c.date).replace(/\{LOT\}/g,c.lot))).replace(/\\\{HEURE\\\}|\{HEURE\}/g,'\\d{1,2}\\s*[:;.H]\\s*\\d{2}').replace(/ /g,'\\s*');
+  if(!new RegExp('^'+r+'$').test(T.replace(/\s+/g,' ')))why.push('Le texte lu ne correspond pas au texte modèle')}
+ return{c,why,heure}}
+$('bv').onclick=async()=>{if(!ok())return;const txt=$('tx').value;if(!txt.trim()){alert('Aucun texte');return}
+ if(cur.mode==='Photo'&&txt.trim()!==(cur.ocr||'').trim())cur.mode='Photo + corrigé manuellement';
+ const t=typ(),v=verify(t,txt),good=!v.why.length;
+ const rec={ts:new Date().toISOString(),op:$('op').value.trim(),prod:$('pr').value,type:t.name,lot:v.c.lot,date:v.c.date,txt,res:good?'OK':'NON OK',why:v.why.join(' ; '),mode:cur.mode,photo:cur.photo||'',exp:false};
+ await put(rec);
+ $('out').innerHTML=`<div class="res ${good?'ok':'ko'}">${good?'OK':'NON OK'}</div>`+(good?'':`<div style="margin-top:8px">${v.why.map(x=>'• '+x).join('<br>')}</div>`);
+ hist();$('ed').classList.add('hide')};
+
+/* Historique et export */
+async function hist(){const a=(await all()).reverse().slice(0,30);
+ $('hs').innerHTML=a.map(r=>`<div class="h">${r.photo?`<img src="${r.photo}">`:'<div style="width:48px"></div>'}<div><b style="color:var(--${r.res==='OK'?'ok':'ko'})">${r.res}</b> ${r.prod}<br>${new Date(r.ts).toLocaleString('fr-FR')} · ${r.op}<br><span class="m">${r.mode}${r.why?' — '+r.why:''}</span></div></div>`).join('')||'<div class="m">Aucun contrôle</div>'}
+async function exportX(rows,name){
+ const wb=new ExcelJS.Workbook(),ws=wb.addWorksheet('Contrôles');
+ ws.columns=[['Date/heure',19],['Opérateur',16],['Produit',22],['Type',12],['Lot attendu',12],['Date attendue',14],['Texte lu',30],['Résultat',10],['Raison',34],['Mode',24],['Photo',16]].map(([header,width],i)=>({header,width,key:'c'+i}));
+ ws.getRow(1).font={bold:true};
+ rows.forEach((r,i)=>{const x=ws.addRow([new Date(r.ts).toLocaleString('fr-FR'),r.op,r.prod,r.type,r.lot,r.date,r.txt,r.res,r.why,r.mode,'']);
+  x.height=80;x.alignment={vertical:'top',wrapText:true};
+  if(r.photo){const id=wb.addImage({base64:r.photo,extension:'jpeg'});ws.addImage(id,{tl:{col:10,row:i+1},ext:{width:100,height:100}})}});
+ const buf=await wb.xlsx.writeBuffer(),a=document.createElement('a');
+ a.href=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+ a.download=`controles_${name.replace(/[^\w-]+/g,'_')}_${new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')}.xlsx`;a.click();
+ for(const r of rows){r.exp=true;await put(r)}}
+$('be').onclick=async()=>{const r=await all();if(r.length)exportX(r,'tout');else alert('Aucun contrôle')};
+$('bc').onclick=async()=>{const r=(await all()).filter(x=>!x.exp);if(r.length)exportX(r,'nouveaux');else alert('Rien à exporter')};
+ui();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script></body></html>
