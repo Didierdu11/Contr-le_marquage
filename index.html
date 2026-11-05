@@ -28,21 +28,7 @@ button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}b
 </style></head><body>
 <div id="pg1">
 <div class="th"><h1>Contrôle marquage carton</h1><button id="bpa" class="s tb">⚙️ Paramètres</button><button id="bno" class="s tb">📖 Notice</button></div>
-<div class="c hide" id="no"><h2>Notice d'utilisation</h2><ol>
-<li><b>Paramètres</b> : le bouton ⚙️ ouvre une page à part (bouton « ← Retour » pour revenir). Vous y choisissez le fichier Excel, réglez le décalage du n° de lot et la tolérance de l'heure. Ces réglages restent mémorisés tant que vous ne les modifiez pas.</li>
-<li><b>Fichier Excel</b> : feuilles « Produits » et « Types de marquage ». Rechargez-le dans les Paramètres après chaque modification. Le résumé (date de chargement, nombre de produits et de types) s'affiche à côté du type.</li>
-<li><b>Changement de n° de lot</b> : le n° du jour change à 00h00. Le <b>décalage</b> (en heures, + ou −) déplace cet instant : −5 → 19h00 la veille ; −4,5 → 19h30 la veille ; +2 → 02h00. L'heure exacte du changement est rappelée sous le champ.</li>
-<li><b>Tolérance de l'heure</b> : quand le type imprime une heure, elle doit être à ± N minutes de l'horloge de l'appareil. N se règle dans les Paramètres (10 par défaut).</li>
-<li><b>Opérateur et produit</b> : saisissez votre nom puis choisissez le produit. Son type de marquage s'affiche dessous.</li>
-<li><b>Aperçu</b> : dans « Contrôle », le cadre blanc montre exactement ce que le carton doit afficher maintenant (lot, date, heure). L1, L2… = lignes du carton. ↵ / ↳ indique la suite de la même ligne, coupée faute de place.</li>
-<li><b>Photo</b> : « 📷 Photo » ouvre l'appareil, « 🖼️ Importer » prend une image existante. Photographiez de près, caractères grands et nets.</li>
-<li><b>Cadre</b> : entourez du doigt uniquement le marquage, puis « 🔍 Lire la zone » (boutons toujours visibles en bas). L'écran montre : ① ce que vous devez avoir, ② la zone encadrée, ③ ce que l'application lit. Corrigez le texte si besoin puis « Vérifier et enregistrer ».</li>
-<li><b>Marquage en points</b> : utilisez « 🧪 Comparer à l'image attendue ». Vert = point attendu trouvé, rouge = point manquant, bleu = point en trop. « 👁 Masquer les points » laisse la photo d'origine. Réglez au besoin sensibilité, largeur des lettres et écarts, puis choisissez ✅ Conforme ou ❌ Non conforme.</li>
-<li><b>Saisie manuelle</b> : si la lecture échoue, recopiez le texte. Le mode « saisie manuelle » est noté dans l'historique.</li>
-<li><b>Résultat</b> : OK ou NON OK avec la raison (date, lot, heure, texte).</li>
-<li><b>Historique et export</b> : chaque contrôle garde nom, heure, résultat, mode et photo. Au changement de produit, l'application propose d'exporter en Excel (avec photos) les contrôles du produit précédent. Boutons d'export : tout, ou seulement les non exportés.</li></ol>
-<p><b>Fichier Excel</b> : colonne « Texte modèle » avec les mots-clés {DATE}, {LOT}, {HEURE} et {*} (texte quelconque). Avec {*}, la comparaison d'image n'est pas possible.</p>
-<p><b>Bon à savoir</b> : les données restent sur l'appareil, sans purge. Connexion internet requise à la première ouverture.</p></div>
+
 
 <div class="c"><h2>1. Opérateur et produit</h2>
 <label>Nom de l'opérateur</label><input id="op" autocomplete="name">
@@ -75,6 +61,25 @@ button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}b
 <div class="m" style="margin-top:4px">Le n° du jour du lot change à 00h00 + ce décalage. Exemples : −5 → 19h00 la veille ; −4,5 → 19h30 la veille ; 0 → 00h00 ; +2 → 02h00. La valeur est mémorisée dans l'application.</div></div>
 <div class="c"><h2>Contrôle de l'heure</h2><label>Tolérance (± minutes)</label><input type="number" id="tol" step="1" min="0" max="720" value="10" inputmode="numeric">
 <div class="m" style="margin-top:4px">Quand le type de marquage imprime une heure, elle est comparée à l'horloge de l'appareil avec cette tolérance. Valeur mémorisée.</div></div>
+</div>
+<div id="pg3" class="hide">
+<div class="th"><button id="bbk2" class="s tb">← Retour</button><h1>Notice</h1></div>
+<div class="c" id="no"><h2>Notice d'utilisation</h2><ol>
+<li><b>Paramètres</b> : le bouton ⚙️ ouvre une page à part (bouton « ← Retour » pour revenir). Vous y choisissez le fichier Excel, réglez le décalage du n° de lot et la tolérance de l'heure. Ces réglages restent mémorisés tant que vous ne les modifiez pas.</li>
+<li><b>Fichier Excel</b> : feuilles « Produits » et « Types de marquage ». Rechargez-le dans les Paramètres après chaque modification. Dans Excel, la feuille « Calcul » a une case « Décalage » : saisissez la même valeur que dans l'application pour que le texte attendu soit identique. Le résumé (date de chargement, nombre de produits et de types) s'affiche à côté du type.</li>
+<li><b>Changement de n° de lot</b> : le n° du jour change à 00h00. Le <b>décalage</b> (en heures, + ou −) déplace cet instant : −5 → 19h00 la veille ; −4,5 → 19h30 la veille ; +2 → 02h00. L'heure exacte du changement est rappelée sous le champ.</li>
+<li><b>Tolérance de l'heure</b> : quand le type imprime une heure, elle doit être à ± N minutes de l'horloge de l'appareil. N se règle dans les Paramètres (10 par défaut).</li>
+<li><b>Opérateur et produit</b> : saisissez votre nom puis choisissez le produit. Son type de marquage s'affiche dessous.</li>
+<li><b>Aperçu</b> : dans « Contrôle », le cadre blanc montre exactement ce que le carton doit afficher maintenant (lot, date, heure). L1, L2… = lignes du carton. ↵ / ↳ indique la suite de la même ligne, coupée faute de place.</li>
+<li><b>Photo</b> : « 📷 Photo » ouvre l'appareil, « 🖼️ Importer » prend une image existante. Photographiez de près, caractères grands et nets.</li>
+<li><b>Cadre</b> : entourez du doigt uniquement le marquage, puis « 🔍 Lire la zone » (boutons toujours visibles en bas). L'écran montre : ① ce que vous devez avoir, ② la zone encadrée, ③ ce que l'application lit. Corrigez le texte si besoin puis « Vérifier et enregistrer ».</li>
+<li><b>Marquage en points</b> : utilisez « 🧪 Comparer à l'image attendue ». Vert = point attendu trouvé, rouge = point manquant, bleu = point en trop. « 👁 Masquer les points » laisse la photo d'origine. Réglez au besoin sensibilité, largeur des lettres et écarts, puis choisissez ✅ Conforme ou ❌ Non conforme.</li>
+<li><b>Saisie manuelle</b> : si la lecture échoue, recopiez le texte. Le mode « saisie manuelle » est noté dans l'historique.</li>
+<li><b>Lecture automatique</b> : l'application fait plusieurs essais à des tailles différentes et retient le lot le plus souvent lu. Si l'heure reste incertaine (chiffres petits), un avertissement s'affiche : contrôlez-la sur la photo.</li>
+<li><b>Résultat</b> : OK ou NON OK avec la raison (date, lot, heure, texte).</li>
+<li><b>Historique et export</b> : chaque contrôle garde nom, heure, résultat, mode et photo. Au changement de produit, l'application propose d'exporter en Excel (avec photos) les contrôles du produit précédent. Boutons d'export : tout, ou seulement les non exportés.</li></ol>
+<p><b>Fichier Excel</b> : colonne « Texte modèle » avec les mots-clés {DATE}, {LOT}, {HEURE} et {*} (texte quelconque). Avec {*}, la comparaison d'image n'est pas possible.</p>
+<p><b>Bon à savoir</b> : les données restent sur l'appareil, sans purge. Connexion internet requise à la première ouverture.</p></div>
 </div>
 
 <script>
@@ -155,7 +160,7 @@ function blur(g,W,H,r){let a=Float32Array.from(g),b=new Float32Array(g.length);
   for(let x=0;x<W;x++){let s=0;for(let y=-r;y<H;y++){if(y+r<H)s+=b[(y+r)*W+x];if(y-r-1>=0)s-=b[(y-r-1)*W+x];if(y>=0){const l=Math.max(0,y-r),h=Math.min(H-1,y+r);a[y*W+x]=s/(h-l+1)}}}}
  return a}
 const sim=(a,b)=>{const m=a.length,n=b.length;let p=Array.from({length:n+1},(_,i)=>i);for(let i=1;i<=m;i++){const q=[i];for(let j=1;j<=n;j++)q[j]=Math.min(p[j]+1,q[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=q}return 1-p[n]/Math.max(m,n,1)};
-function prep(dots,flat){const r=sel||{x:0,y:0,w:img.width,h:img.height},k=Math.min(3,Math.max(1,1100/r.w)),c=document.createElement('canvas');
+function prep(dots,flat,km){const r=sel||{x:0,y:0,w:img.width,h:img.height},k=Math.min(4,Math.max(1,1100/r.w)*(km||1)),c=document.createElement('canvas');
  c.width=Math.round(r.w*k);c.height=Math.round(r.h*k);const x=c.getContext('2d');x.drawImage(img,r.x,r.y,r.w,r.h,0,0,c.width,c.height);
  const d=x.getImageData(0,0,c.width,c.height),n=c.width*c.height;let g=new Uint8Array(n),h=new Array(256).fill(0);
  for(let i=0;i<n;i++){g[i]=.3*d.data[4*i]+.59*d.data[4*i+1]+.11*d.data[4*i+2];h[g[i]|0]++}
@@ -168,17 +173,25 @@ function prep(dots,flat){const r=sel||{x:0,y:0,w:img.width,h:img.height},k=Math.
   g=o}
  for(let i=0;i<n;i++){d.data[4*i]=d.data[4*i+1]=d.data[4*i+2]=g[i];d.data[4*i+3]=255}
  x.putImageData(d,0,0);return c.toDataURL('image/png')}
+function vote(res){const L=new Map(),T=new Map(),add=(M,k)=>M.set(k,(M.get(k)||0)+1),top=M=>[...M.entries()].sort((a,b)=>b[1]-a[1])[0];
+ for(const r of res){const t=r.text.replace(/\s+/g,' '),m=t.match(/[A-Z]?\d{4} ?R/i),h=t.match(/(\d{2}) ?[:;.°'·]? ?(\d{2}) *$/);
+  if(m)add(L,m[0].replace(/ /g,'').toUpperCase());if(h)add(T,h[1]+':'+h[2])}
+ return{lot:top(L),time:top(T)}}
 $('bo').onclick=async()=>{$('bo').disabled=true;$('ocr').textContent='Lecture en cours (la première fois, le téléchargement du moteur peut prendre un moment)…';
- let best={text:'',conf:-1};
+ const res=[],V=[[false,true,1],[false,true,2],[false,true,3],[false,false,2],[true,false,1]];let best={text:'',conf:-1};
  try{if(!worker)worker=await Tesseract.createWorker('eng',1,{langPath:'https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng/4.0.0_best_int'});
-  for(const [dots,flat] of [[false,true],[false,false],[true,false]]){
+  for(let i=0;i<V.length;i++){const[dots,flat,km]=V[i];$('ocr').textContent=`Lecture en cours… essai ${i+1}/${V.length}`;
    await worker.setParameters({tessedit_pageseg_mode:'6',tessedit_char_whitelist:dots?'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/:.- ':''});
-   const r=(await worker.recognize(prep(dots,flat))).data,t=r.text.trim();
-   if(t.replace(/\W/g,'').length>=4&&r.confidence>best.conf)best={text:t,conf:r.confidence}}}
+   const r=(await worker.recognize(prep(dots,flat,km))).data,t=r.text.trim();
+   if(t.replace(/\W/g,'').length>=4){res.push({text:t,conf:r.confidence});if(r.confidence>best.conf)best={text:t,conf:r.confidence}}}}
  catch(err){worker=null}
  $('bo').disabled=false;$('cr').classList.add('hide');$('ed').classList.remove('hide');
  if(best.conf<0){cur.mode='Manuel (lecture photo échouée)';$('ocr').textContent="⚠ Lecture impossible : saisissez le texte à la main (ce sera noté dans l'historique).";$('tx').value=''}
- else{cur.mode='Photo';cur.ocr=best.text;$('ocr').textContent=`Lecture terminée (confiance ${Math.round(best.conf)} %). Vérifiez et corrigez si besoin.`;$('tx').value=best.text}
+ else{let txt=best.text,info=[];const v=vote(res),n=res.length,ty=typ();
+  if(v.lot){const re=/[A-Z]?\d{4} ?R/i;if(re.test(txt))txt=txt.replace(re,v.lot[0]);info.push(`lot ${v.lot[0]} lu ${v.lot[1]}/${n} fois`)}
+  if(ty&&ty.heure){if(v.time&&v.time[1]/n>=.5){const re=/(\d{2}) ?[:;.°'·]? ?(\d{2}) *$/;txt=re.test(txt)?txt.replace(re,v.time[0]):txt.replace(/\s+$/,'')+' '+v.time[0];info.push(`heure ${v.time[0]} lue ${v.time[1]}/${n} fois`)}
+   else info.push("⚠ heure incertaine : vérifiez les chiffres sur la photo (ils sont petits)")}
+  cur.mode='Photo';cur.ocr=txt;$('ocr').textContent=`Lecture terminée (${info.join(' · ')||'confiance '+Math.round(best.conf)+' %'}). Vérifiez et corrigez si besoin.`;$('tx').value=txt}
  fillCmp(cropURL(),'Zone encadrée');$('cmp').scrollIntoView({behavior:'smooth',block:'start'})};
 
 const mc=document.createElement('canvas').getContext('2d');
@@ -332,10 +345,10 @@ $('be').onclick=async()=>{const r=await all();if(r.length)exportX(r,'tout');else
 $('bc').onclick=async()=>{const r=(await all()).filter(x=>!x.exp);if(r.length)exportX(r,'nouveaux');else alert('Rien à exporter')};
 const hh=m=>p2(Math.floor(m/60))+':'+p2(m%60);
 function decInfo(){$('decm').textContent='Le n° du jour du lot change à '+hh(Math.round(((DEC*60)%1440+1440)%1440))+'.'}
-function route(){const p=location.hash==='#parametres';$('pg1').classList.toggle('hide',p);$('pg2').classList.toggle('hide',!p);window.scrollTo(0,0);if(!p)exp()}
+function route(){const h=location.hash;$('pg1').classList.toggle('hide',h==='#parametres'||h==='#notice');$('pg2').classList.toggle('hide',h!=='#parametres');$('pg3').classList.toggle('hide',h!=='#notice');window.scrollTo(0,0);if(h!=='#parametres'&&h!=='#notice')exp()}
 $('bpa').onclick=()=>{location.hash='parametres'};
 $('bbk').onclick=()=>{location.hash='principal'};
-$('bno').onclick=()=>$('no').classList.toggle('hide');
+$('bno').onclick=()=>{location.hash='notice'};$('bbk2').onclick=()=>{location.hash='principal'};
 $('dec').value=DEC;$('dec').oninput=()=>{DEC=parseFloat($('dec').value)||0;try{localStorage.setItem('dec2',DEC)}catch(e){};decInfo()};
 $('tol').value=TOL;$('tol').oninput=()=>{const v=parseFloat($('tol').value);TOL=isNaN(v)||v<0?0:v;try{localStorage.setItem('tol',TOL)}catch(e){}};
 window.addEventListener('hashchange',route);window.addEventListener('resize',()=>{if(!$('pg1').classList.contains('hide'))exp()});
