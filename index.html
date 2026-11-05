@@ -214,15 +214,18 @@ function ctcDecode(o,L){let prev=-1,s='',sum=0,n=0;
  for(let t=0;t<o.T;t++){let bi=0,bv=-1e9;for(let k=0;k<o.C;k++){const v=o.data[t*o.C+k];if(v>bv){bv=v;bi=k}}
   if(bi!==L.blank&&bi!==prev){s+=L.chars[bi];sum+=Math.min(1,bv);n++}prev=bi}
  return{text:s,conf:n?sum/n*100:0}}
-function layouts(lines,C){const out=[],N=lines.length,add=(chars,blank,name)=>{if(chars.length===C)out.push({chars,blank,name})};
- add(['',...lines,' '],0,'A');add(['',...lines],0,'B');add([...lines,''],N,'C');
- add(lines.map((x,i)=>i?x:''),0,'D');add(lines.map((x,i)=>i<N-1?x:''),N-1,'E');add([...lines,' ',''],N+1,'F');return out}
-async function paddleCal(P){const o=await paddleLogits(P,testCanvas()),cands=layouts(P.lines,o.C);
- if(!cands.length)throw new Error(`Dictionnaire incompatible avec le modèle (${o.C} classes, ${P.lines.length} lignes dans dict.txt)`);
+function layouts(lines,C){const out=[],N=lines.length;
+ for(const blank of [0,C-1])for(let sh=-3;sh<=3;sh++){const chars=new Array(C);
+  for(let i=0;i<C;i++){const j=i-sh;chars[i]=i===blank?'':(j>=0&&j<N?lines[j]:(j===N?' ':''))}
+  out.push({chars,blank,name:`blanc ${blank?'à la fin':'au début'}, décalage ${sh}`})}
+ return out}
+function rawSeq(o){const q=[];let prev=-1;for(let t=0;t<o.T;t++){let bi=0,bv=-1e9;for(let k=0;k<o.C;k++){const v=o.data[t*o.C+k];if(v>bv){bv=v;bi=k}}if(bi!==prev)q.push(bi);prev=bi}return q.slice(0,40).join(',')}
+async function paddleCal(P){const o=await paddleLogits(P,testCanvas()),N=P.lines.length,head=P.lines.slice(0,3).join('|'),tail=P.lines.slice(-3).join('|'),
+ info=`${o.C} classes, ${N} lignes dict.txt [début: ${head} — fin: ${tail}], indices lus: ${rawSeq(o)}`;
  const nz=x=>x.toUpperCase().replace(/\s+/g,'');let best=null,bs=-1,bt='';
- for(const L of cands){const r=ctcDecode(o,L),sc=sim(nz(r.text),nz('No de lot : 6308R 22:35'));if(sc>bs){bs=sc;best=L;bt=r.text}}
- if(bs<.5)throw new Error(`Dictionnaire incompatible : le test lit « ${bt} » (${o.C} classes, ${P.lines.length} lignes)`);
- P.layout=best;P.cal=Math.round(bs*100)}
+ for(const L of layouts(P.lines,o.C)){const r=ctcDecode(o,L),sc=sim(nz(r.text),nz('No de lot : 6308R 22:35'));if(sc>bs){bs=sc;best=L;bt=r.text}}
+ if(bs<.5)throw new Error(`Dictionnaire incompatible : le test lit « ${bt} » (${info})`);
+ P.layout=best;P.cal=Math.round(bs*100);P.info=info}
 async function paddleRec(c){const P=await paddleInit(),o=await paddleLogits(P,c);return ctcDecode(o,P.layout)}
 function splitLines(c){const W=c.width,H=c.height,d=c.getContext('2d').getImageData(0,0,W,H).data,rows=new Float32Array(H);
  for(let y=0;y<H;y++){let n=0;for(let x=0;x<W;x++)if(d[4*(y*W+x)]<110)n++;rows[y]=n}
@@ -247,7 +250,7 @@ async function readTess(say){const res=[],V=[[false,true,1],[false,true,2],[fals
   if(t.replace(/\W/g,'').length>=4)res.push({text:t,conf:r.confidence})}
  return res}
 async function testPaddle(){const o=$('pst');o.textContent='Chargement du moteur…';
- try{const t0=performance.now(),r=await paddleRec(testCanvas());o.textContent=`✅ PaddleOCR prêt (${PS.name}, disposition ${PS.layout.name}, calibrage ${PS.cal} %). Test : « ${r.text} » en ${Math.round(performance.now()-t0)} ms. Attendu : N° de lot : 6308R 22:35 (le ° peut manquer).`}
+ try{const t0=performance.now(),r=await paddleRec(testCanvas());o.textContent=`✅ PaddleOCR prêt (${PS.name}, disposition ${PS.layout.name}, calibrage ${PS.cal} %). Test : « ${r.text} » en ${Math.round(performance.now()-t0)} ms. Détail : ${PS.info}. Attendu : N° de lot : 6308R 22:35 (le ° peut manquer).`}
  catch(e){o.textContent='❌ '+e.message}}
 $('bo').onclick=async()=>{$('bo').disabled=true;const say=m=>$('ocr').textContent=m;say('Lecture en cours (la première fois, le téléchargement des moteurs peut prendre un moment)…');
  let res=[],used='',why='';
