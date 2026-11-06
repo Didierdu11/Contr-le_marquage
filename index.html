@@ -3,6 +3,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Contrôle marquage</title>
 <link rel="manifest" href="manifest.json"><meta name="theme-color" content="#5b3a29">
+<link rel="icon" href="favicon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Marquage">
 <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.3/dist/ort.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
@@ -19,6 +21,9 @@ button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}b
 .res{font-size:22px;font-weight:700;padding:10px;border-radius:8px;text-align:center;color:#fff}.ok{background:var(--ok)}.ko{background:var(--ko)}
 .h{display:flex;gap:8px;border-top:1px solid var(--bd);padding:8px 0;font-size:13px}.h img{width:48px;height:48px;object-fit:cover;border-radius:6px}
 .hide{display:none}
+.mb{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}.mb.hide{display:none}
+.md{background:var(--card);color:var(--tx);border-radius:14px;padding:18px;max-width:420px;width:100%}.md h3{margin:0 0 8px;font-size:17px;color:var(--ac)}.md p{margin:0 0 12px;font-size:15px;white-space:pre-line}
+#ft{text-align:center;font-size:12px;color:var(--mu);margin:18px 0 6px}
 #cam{position:fixed;inset:0;background:#000;z-index:100;display:flex;flex-direction:column}
 #cam.hide{display:none}
 #cambox{flex:1;position:relative;overflow:hidden}#camv{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
@@ -56,7 +61,7 @@ button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}b
 <button id="bv">Vérifier et enregistrer</button><button id="bb" class="s">↩ Redessiner le cadre</button></div>
 <div id="ov" class="hide"></div><div id="out" style="margin-top:10px"></div></div>
 
-<div class="c"><h2>Historique</h2>
+<div class="c"><h2 id="hh">Historique (0)</h2>
 <div class="r"><button id="be" class="s">Exporter tout (Excel)</button><button id="bc" class="s">Exporter non exportés</button></div>
 <div class="m" id="hmsg" style="margin:6px 0"></div><div id="hs"></div></div>
 </div>
@@ -108,6 +113,7 @@ Ces deux fichiers vont ensemble (même dossier « rec/english » du dépôt). Ne
 <li><b>Attendre</b> environ 1 à 2 minutes que GitHub Pages publie, puis ouvrez l'application avec internet.</li>
 <li><b>Vérifier</b> : ⚙️ Paramètres → « Tester PaddleOCR ». Message attendu : ✅ PaddleOCR prêt, avec le texte lu pour une phrase d'essai.</li></ol>
 <p>Le modèle lit des lignes recadrées : entourez bien le marquage. Solution de secours si ces liens changent : fichiers en_PP-OCRv3_rec_infer.onnx (huggingface.co/SWHL/RapidOCR, dossier PP-OCRv3) et en_dict.txt (dépôt PaddleOCR, ppocr/utils/en_dict.txt), à renommer en <b>model.onnx</b> et <b>dict.txt</b>.</p>
+<p><b>Installer l'application sur le téléphone</b> : ouvrez la page avec Chrome, menu ⋮ → « Installer l'application » (ou « Ajouter à l'écran d'accueil »). Sur iPhone : Safari → Partager → « Sur l'écran d'accueil ». L'icône « Contrôle marquage » apparaît ensuite avec les autres applications. Le produit choisi est mémorisé même après fermeture.</p>
 <p><b>Bon à savoir</b> : les données restent sur l'appareil, sans purge. Connexion internet requise à la première ouverture.</p></div>
 </div>
 
@@ -115,8 +121,13 @@ Ces deux fichiers vont ensemble (même dossier « rec/english » du dépôt). Ne
 <div id="camt">Placez le marquage dans le cadre jaune, de près et net</div>
 <div id="camb"><button id="cam1">📸 Prendre la photo</button><div class="r hide" id="cam2"><button id="camok">✅ Valider</button><button id="camre" class="s">↺ Reprendre</button></div>
 <div class="r"><button id="camto" class="s hide">🔦 Lampe</button><button id="camx" class="s">✖ Annuler</button></div></div></div>
+<div id="ft">© D@V · Version 1.0 · 06/11/2026</div>
+<div id="mb" class="mb hide"><div class="md"><h3 id="mt"></h3><p id="mm"></p><div class="r"><button id="mc" class="s hide"></button><button id="mo">OK</button></div></div></div>
 <script>
 const $=id=>document.getElementById(id);
+function dlg(msg,title,ok,cancel){return new Promise(res=>{$('mt').textContent=title||'Contrôle marquage';$('mm').textContent=msg;$('mo').textContent=ok||'OK';const c=$('mc');c.textContent=cancel||'';c.classList.toggle('hide',!cancel);$('mb').classList.remove('hide');
+ const end=v=>{$('mb').classList.add('hide');res(v)};$('mo').onclick=()=>end(true);c.onclick=()=>end(false)})}
+const info=(m,t)=>dlg(m,t||'Information'),ask=(m,t,o,c)=>dlg(m,t,o||'Oui',c||'Non');
 const MOIS=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 const p2=n=>String(n).padStart(2,'0');
 let DEC=0,TOL=10,ENG='auto',FW=80,FH=20,PURGE=true;try{PURGE=localStorage.getItem('purge')!=='0';FW=parseFloat(localStorage.getItem('fw'))||80;FH=parseFloat(localStorage.getItem('fh'))||20;ENG=localStorage.getItem('eng')||'auto';DEC=parseFloat(localStorage.getItem('dec2'))||0;const q=parseFloat(localStorage.getItem('tol'));if(!isNaN(q))TOL=q}catch(e){}
@@ -146,7 +157,7 @@ $('xl').onchange=async e=>{
 function ui(){
  $('xs').textContent=DB.file?`${DB.file} (chargé le ${DB.maj})`:'Aucun fichier chargé';
  $('sum').textContent=DB.file?`Base chargée le ${DB.maj} · ${DB.prods.length} produit${DB.prods.length>1?'s':''} · ${Object.keys(DB.types).length} type${Object.keys(DB.types).length>1?'s':''}`:'Aucune base chargée';
- const s=$('pr');const v=s.value;s.innerHTML='<option value="">— choisir —</option>'+DB.prods.map(p=>`<option>${p.n}</option>`).join('');s.value=v;exp()}
+ const s=$('pr');let v=s.value;if(!v){try{v=localStorage.getItem('prod')||''}catch(e){}}s.innerHTML='<option value="">— choisir —</option>'+DB.prods.map(p=>`<option>${p.n}</option>`).join('');s.value=v;if(s.value&&!prevProd)prevProd=s.value;exp()}
 
 /* Calcul du lot et de la date attendus */
 function calc(t,now=new Date()){
@@ -164,8 +175,8 @@ function exp(){const t=typ();
  if(t.dur===undefined&&!t.tpl&&!t.fmt){$('ty').textContent=`Type « ${t.name} » introuvable dans le fichier`;$('pvw').classList.add('hide');return}
  $('ty').textContent='Type : '+t.name;$('pvw').classList.remove('hide');renderPrev($('pv'),expText());
  $('pcap').textContent=t.tpl?'Aperçu de ce que le carton doit afficher maintenant (lot, date et heure calculés) :':'⚠ Texte modèle non renseigné dans Excel : aperçu minimal, seuls date et lot sont contrôlés.'}
-$('pr').onchange=async()=>{const n=$('pr').value;
- if(prevProd&&n!==prevProd){const r=(await all()).filter(x=>x.prod===prevProd&&!x.exp);if(r.length&&confirm(`Changement de produit : exporter les ${r.length} contrôle(s) de « ${prevProd} » ?`))await exportX(r,'changement_'+prevProd)}
+$('pr').onchange=async()=>{const n=$('pr').value;try{localStorage.setItem('prod',n)}catch(e){}
+ if(prevProd&&n!==prevProd){const r=(await all()).filter(x=>x.prod===prevProd&&!x.exp);if(r.length&&await ask(`Vous changez de produit.\nExporter en Excel les ${r.length} contrôle(s) de « ${prevProd} » ?`,'Changement de produit','Exporter','Ne pas exporter'))await exportX(r,'changement_'+prevProd)}
  prevProd=n;exp();reset()};
 $('op').oninput=()=>{try{localStorage.setItem('op',$('op').value)}catch(e){}};
 function reset(){cur={photo:null,mode:'Manuel'};$('ov').className='hide';$('ed').classList.add('hide');$('cr').classList.add('hide');$('tx').value='';$('out').innerHTML='';$('ocr').textContent='';$('cmp').innerHTML=''}
@@ -174,7 +185,7 @@ function reset(){cur={photo:null,mode:'Manuel'};$('ov').className='hide';$('ed')
 $('bi').onclick=()=>{if(!ok())return;$('ph2').click()};
 $('bp').onclick=()=>{if(!ok())return;openCam()};
 $('bm').onclick=()=>{if(!ok())return;reset();$('ed').classList.remove('hide');$('tx').focus()};
-function ok(){if(!$('op').value.trim()){alert("Saisissez le nom de l'opérateur");return false}if(!typ()){alert('Choisissez un produit (et chargez le fichier Excel)');return false}return true}
+function ok(){if(!$('op').value.trim()){info("Saisissez le nom de l'opérateur avant de continuer.",'Opérateur manquant');return false}if(!typ()){info('Choisissez un produit. Si la liste est vide, chargez le fichier Excel dans les Paramètres.','Produit manquant');return false}return true}
 function shrink(f){return new Promise(r=>{const i=new Image();i.onload=()=>{const k=Math.min(1,1600/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);r(c.toDataURL('image/jpeg',.75))};i.src=URL.createObjectURL(f)})}
 let sel=null,img=null,worker=null;
 /* ---- caméra avec cadre en surimpression ---- */
@@ -413,7 +424,7 @@ async function decide(good){if(!ocv)return;const{t,c}=OS;
  const rec={ts:new Date().toISOString(),op:$('op').value.trim(),prod:$('pr').value,type:t.name,lot:c.lot,date:c.date,txt:ocv.txt,res:good?'OK':'NON OK',why:why.join(' ; '),mode:`Comparaison image (auto ${ocv.ok?'OK':'NON OK'}, mini ${ocv.mn} %, moy. ${ocv.avg} %)`,photo:cur.photo||'',exp:false};
  await put(rec);$('ov').innerHTML=`<div class="res ${good?'ok':'ko'}">${good?'OK':'NON OK'} enregistré</div>`;hist();$('cr').classList.add('hide')}
 $('bk').onclick=()=>{if(!ok())return;const t=typ(),c=calc(t),L=olines(t,c);
- if(!L){alert('Ce type contient {*} (texte variable) : comparaison impossible. Utilisez la lecture ou la saisie.');return}
+ if(!L){info('Ce type contient {*} (texte variable) : la comparaison d\'image est impossible. Utilisez la lecture ou la saisie.','Comparaison impossible');return}
  grayInit();OS={L,t,c};cur.mode='Comparaison image';showOCV()};
 
 /* Vérification */
@@ -442,7 +453,7 @@ function verify(t,txt){
    else{const hm=(T.match(/(\d{1,2})[:;.H](\d{2})/)||[''])[0],E=norm(t.tpl.replace(/\{DATE\}/g,c.date).replace(/\{LOT\}/g,c.lot).replace(/\{HEURE\}/g,hm)),sm=sim(E,T);
     if(sm<.7)why.push(`Le texte lu diffère du modèle (similarité ${Math.round(sm*100)} %)`)}}}
  return{c,why,heure}}
-$('bv').onclick=async()=>{if(!ok())return;const txt=$('tx').value;if(!txt.trim()){alert('Aucun texte');return}
+$('bv').onclick=async()=>{if(!ok())return;const txt=$('tx').value;if(!txt.trim()){info('Aucun texte à vérifier : lisez la zone ou saisissez le texte.','Texte manquant');return}
   if(cur.mode==='Photo'&&txt.trim()!==(cur.ocr||'').trim())cur.mode='Photo + corrigé manuellement';
  const t=typ(),v=verify(t,txt),good=!v.why.length;
  const rec={ts:new Date().toISOString(),op:$('op').value.trim(),prod:$('pr').value,type:t.name,lot:v.c.lot,date:v.c.date,txt,res:good?'OK':'NON OK',why:v.why.join(' ; '),mode:cur.mode,photo:cur.photo||'',exp:false};
@@ -451,23 +462,26 @@ $('bv').onclick=async()=>{if(!ok())return;const txt=$('tx').value;if(!txt.trim()
  hist();$('ed').classList.add('hide')};
 
 /* Historique et export */
-async function hist(){const a=(await all()).reverse().slice(0,30);
+async function hist(){const A=await all(),a=[...A].reverse().slice(0,30);$('hh').textContent='Historique ('+A.length+')';
  $('hs').innerHTML=a.map(r=>`<div class="h">${r.photo?`<img src="${r.photo}">`:'<div style="width:48px"></div>'}<div><b style="color:var(--${r.res==='OK'?'ok':'ko'})">${r.res}</b> ${r.prod}<br>${new Date(r.ts).toLocaleString('fr-FR')} · ${r.op}<br><span class="m">${r.mode}${r.why?' — '+r.why:''}</span></div></div>`).join('')||'<div class="m">Aucun contrôle</div>'}
 async function exportX(rows,name){
- const wb=new ExcelJS.Workbook(),ws=wb.addWorksheet('Contrôles');
- ws.columns=[['Date/heure',19],['Opérateur',16],['Produit',22],['Type',12],['Lot attendu',12],['Date attendue',14],['Texte lu',30],['Résultat',10],['Raison',34],['Mode',24],['Photo',16]].map(([header,width],i)=>({header,width,key:'c'+i}));
- ws.getRow(1).font={bold:true};
+ const prods=[...new Set(rows.map(r=>r.prod))],label=prods.length===1?prods[0]:'Plusieurs produits',n=rows.length,now=new Date();
+ const H=['Date/heure','Opérateur','Produit','Type','Lot attendu','Date attendue','Texte lu','Résultat','Raison','Mode','Photo'],Wd=[19,16,22,12,12,14,30,10,34,24,16];
+ const wb=new ExcelJS.Workbook(),ws=wb.addWorksheet('Contrôles');ws.columns=Wd.map((width,i)=>({width,key:'c'+i}));
+ ws.addRow(['Contrôle marquage — '+label]);ws.mergeCells(1,1,1,H.length);ws.getRow(1).font={bold:true,size:16};ws.getRow(1).height=28;
+ ws.addRow([`${n} enregistrement${n>1?'s':''} · exporté le ${now.toLocaleString('fr-FR')}`]);ws.mergeCells(2,1,2,H.length);
+ ws.addRow(H);ws.getRow(3).font={bold:true};
  rows.forEach((r,i)=>{const x=ws.addRow([new Date(r.ts).toLocaleString('fr-FR'),r.op,r.prod,r.type,r.lot,r.date,r.txt,r.res,r.why,r.mode,'']);
   x.height=80;x.alignment={vertical:'top',wrapText:true};
-  if(r.photo){const id=wb.addImage({base64:r.photo,extension:'jpeg'});ws.addImage(id,{tl:{col:10,row:i+1},ext:{width:100,height:100}})}});
- const buf=await wb.xlsx.writeBuffer(),a=document.createElement('a');
+  if(r.photo){const id=wb.addImage({base64:r.photo,extension:'jpeg'});ws.addImage(id,{tl:{col:10,row:3+i},ext:{width:100,height:100}})}});
+ const buf=await wb.xlsx.writeBuffer(),a=document.createElement('a'),stamp=`${now.getFullYear()}-${p2(now.getMonth()+1)}-${p2(now.getDate())} ${p2(now.getHours())}h${p2(now.getMinutes())}`;
  a.href=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
- a.download=`controles_${name.replace(/[^\w-]+/g,'_')}_${new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')}.xlsx`;a.click();
+ a.download=`Contrôle marquage - ${label} - ${n} enreg - ${stamp}.xlsx`.replace(/[\\/:*?"<>|]+/g,'-');a.click();
  if(PURGE){for(const r of rows)await del(r.id);$('hmsg').textContent=`${rows.length} contrôle(s) exporté(s) et effacé(s) de l'historique.`}
  else{for(const r of rows){r.exp=true;await put(r)}$('hmsg').textContent=`${rows.length} contrôle(s) exporté(s) (conservés dans l'historique).`}
  hist()}
-$('be').onclick=async()=>{const r=await all();if(r.length)exportX(r,'tout');else alert('Aucun contrôle')};
-$('bc').onclick=async()=>{const r=(await all()).filter(x=>!x.exp);if(r.length)exportX(r,'nouveaux');else alert('Rien à exporter')};
+$('be').onclick=async()=>{const r=await all();if(r.length)exportX(r,'tout');else info('Il n\'y a aucun contrôle à exporter.','Export')};
+$('bc').onclick=async()=>{const r=(await all()).filter(x=>!x.exp);if(r.length)exportX(r,'nouveaux');else info('Tous les contrôles ont déjà été exportés.','Export')};
 const hh=m=>p2(Math.floor(m/60))+':'+p2(m%60);
 function decInfo(){$('decm').textContent='Le n° du jour du lot change à '+hh(Math.round(((DEC*60)%1440+1440)%1440))+'.'}
 function route(){const h=location.hash;$('pg1').classList.toggle('hide',h==='#parametres'||h==='#notice');$('pg2').classList.toggle('hide',h!=='#parametres');$('pg3').classList.toggle('hide',h!=='#notice');window.scrollTo(0,0);if(h!=='#parametres'&&h!=='#notice')exp()}
