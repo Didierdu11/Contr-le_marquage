@@ -19,6 +19,12 @@ button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}b
 .res{font-size:22px;font-weight:700;padding:10px;border-radius:8px;text-align:center;color:#fff}.ok{background:var(--ok)}.ko{background:var(--ko)}
 .h{display:flex;gap:8px;border-top:1px solid var(--bd);padding:8px 0;font-size:13px}.h img{width:48px;height:48px;object-fit:cover;border-radius:6px}
 .hide{display:none}
+#cam{position:fixed;inset:0;background:#000;z-index:100;display:flex;flex-direction:column}
+#cam.hide{display:none}
+#cambox{flex:1;position:relative;overflow:hidden}#camv{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+#camf{position:absolute;border:3px solid #ffd400;box-shadow:0 0 0 9999px rgba(0,0,0,.5);border-radius:4px;pointer-events:none}
+#camt{color:#fff;text-align:center;font:13px system-ui,sans-serif;padding:6px;background:#111}
+#camb{padding:6px 10px calc(10px + env(safe-area-inset-bottom,0px));background:#111}#cam button.s{color:#fff;border-color:#fff}
 .th{display:flex;align-items:center;gap:6px;margin:4px 0 12px}.th h1{flex:1;margin:0;font-size:15px;line-height:1.2}.tb{width:auto;margin:0;padding:8px 9px;font-size:12px}
 .ty{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;margin-top:8px}.ty b{font-size:15px}
 .pvb{background:#fff;color:#111;border:2px solid #111;border-radius:6px;padding:10px;margin-top:6px}
@@ -60,6 +66,11 @@ button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}b
 <div class="c"><h2>Changement du numéro de lot</h2><label>Décalage (heures, + ou −)</label><input type="number" id="dec" step="0.25" min="-24" max="24" value="0" inputmode="decimal">
 <div class="m" id="decm" style="margin-top:6px;font-weight:600"></div>
 <div class="m" style="margin-top:4px">Le n° du jour du lot change à 00h00 + ce décalage. Exemples : −5 → 19h00 la veille ; −4,5 → 19h30 la veille ; 0 → 00h00 ; +2 → 02h00. La valeur est mémorisée dans l'application.</div></div>
+<div class="c"><h2>Cadre de prise de photo</h2>
+<label>Largeur du cadre : <b id="vfw"></b></label><input type="range" id="fw" min="20" max="100" step="1" value="80">
+<label>Hauteur du cadre : <b id="vfh"></b></label><input type="range" id="fh" min="5" max="60" step="1" value="20">
+<div style="width:165px;height:220px;margin:10px auto 0;background:#222;position:relative;border-radius:6px"><div id="fpf" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);border:3px solid #ffd400;border-radius:3px;box-sizing:border-box"></div></div>
+<div class="m" style="margin-top:6px">Ce cadre apparaît en surimpression quand vous prenez la photo (aperçu ci-dessus, en proportion de l'écran). Seule la zone du cadre est lue. Valeurs mémorisées.</div></div>
 <div class="c"><h2>Moteur de lecture</h2><label>Moteur utilisé pour « Lire la zone »</label>
 <select id="eng"><option value="auto">Automatique (PaddleOCR, sinon Tesseract)</option><option value="paddle">PaddleOCR seulement</option><option value="tess">Tesseract seulement</option></select>
 <button id="bpt" class="s">Tester PaddleOCR</button><div class="m" id="pst" style="margin-top:6px"></div>
@@ -76,8 +87,8 @@ button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}b
 <li><b>Tolérance de l'heure</b> : quand le type imprime une heure, elle doit être à ± N minutes de l'horloge de l'appareil. N se règle dans les Paramètres (10 par défaut).</li>
 <li><b>Opérateur et produit</b> : saisissez votre nom puis choisissez le produit. Son type de marquage s'affiche dessous.</li>
 <li><b>Aperçu</b> : dans « Contrôle », le cadre blanc montre exactement ce que le carton doit afficher maintenant (lot, date, heure). L1, L2… = lignes du carton. ↵ / ↳ indique la suite de la même ligne, coupée faute de place.</li>
-<li><b>Photo</b> : « 📷 Photo » ouvre l'appareil, « 🖼️ Importer » prend une image existante. Photographiez de près, caractères grands et nets.</li>
-<li><b>Cadre</b> : entourez du doigt uniquement le marquage, puis « 🔍 Lire la zone » (boutons toujours visibles en bas). L'écran montre : ① ce que vous devez avoir, ② la zone encadrée, ③ ce que l'application lit. Corrigez le texte si besoin puis « Vérifier et enregistrer ».</li>
+<li><b>Photo</b> : « 📷 Photo » ouvre la caméra avec un <b>cadre jaune en surimpression</b>. Placez le marquage dans le cadre, de près et net, touchez « 📸 Prendre la photo », puis « ✅ Valider » (ou « ↺ Reprendre »). La lecture de la zone du cadre démarre alors toute seule et vous arrivez directement sur la zone de contrôle. Largeur et hauteur du cadre se règlent dans les Paramètres. « 🖼️ Importer » prend une image existante : le cadre par défaut est posé au centre, vous pouvez le redessiner.</li>
+<li><b>Cadre (si besoin de le modifier)</b> : « ↩ Redessiner le cadre » ou après une importation, entourez du doigt uniquement le marquage, puis « 🔍 Lire la zone » (boutons toujours visibles en bas). L'écran montre : ① ce que vous devez avoir, ② la zone encadrée, ③ ce que l'application lit. Corrigez le texte si besoin puis « Vérifier et enregistrer ».</li>
 <li><b>Marquage en points</b> : utilisez « 🧪 Comparer à l'image attendue ». Vert = point attendu trouvé, rouge = point manquant, bleu = point en trop. « 👁 Masquer les points » laisse la photo d'origine. Réglez au besoin sensibilité, largeur des lettres et écarts, puis choisissez ✅ Conforme ou ❌ Non conforme.</li>
 <li><b>Saisie manuelle</b> : si la lecture échoue, recopiez le texte. Le mode « saisie manuelle » est noté dans l'historique.</li>
 <li><b>Lecture automatique</b> : l'application fait plusieurs essais à des tailles différentes et retient le lot le plus souvent lu. Si l'heure reste incertaine (chiffres petits), un avertissement s'affiche : contrôlez-la sur la photo.</li>
@@ -97,11 +108,15 @@ Ces deux fichiers vont ensemble (même dossier « rec/english » du dépôt). Ne
 <p><b>Bon à savoir</b> : les données restent sur l'appareil, sans purge. Connexion internet requise à la première ouverture.</p></div>
 </div>
 
+<div id="cam" class="hide"><div id="cambox"><video id="camv" playsinline muted autoplay></video><div id="camf"></div></div>
+<div id="camt">Placez le marquage dans le cadre jaune, de près et net</div>
+<div id="camb"><button id="cam1">📸 Prendre la photo</button><div class="r hide" id="cam2"><button id="camok">✅ Valider</button><button id="camre" class="s">↺ Reprendre</button></div>
+<div class="r"><button id="camto" class="s hide">🔦 Lampe</button><button id="camx" class="s">✖ Annuler</button></div></div></div>
 <script>
 const $=id=>document.getElementById(id);
 const MOIS=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 const p2=n=>String(n).padStart(2,'0');
-let DEC=0,TOL=10,ENG='auto';try{ENG=localStorage.getItem('eng')||'auto';DEC=parseFloat(localStorage.getItem('dec2'))||0;const q=parseFloat(localStorage.getItem('tol'));if(!isNaN(q))TOL=q}catch(e){}
+let DEC=0,TOL=10,ENG='auto',FW=80,FH=20;try{FW=parseFloat(localStorage.getItem('fw'))||80;FH=parseFloat(localStorage.getItem('fh'))||20;ENG=localStorage.getItem('eng')||'auto';DEC=parseFloat(localStorage.getItem('dec2'))||0;const q=parseFloat(localStorage.getItem('tol'));if(!isNaN(q))TOL=q}catch(e){}
 let DB={types:{},prods:[]},cur={photo:null,mode:'Manuel'},prevProd='',idb;
 try{DB=JSON.parse(localStorage.getItem('db'))||DB}catch(e){}
 try{$('op').value=localStorage.getItem('op')||''}catch(e){}
@@ -153,11 +168,32 @@ function reset(){cur={photo:null,mode:'Manuel'};$('ov').className='hide';$('ed')
 
 /* Photo + OCR */
 $('bi').onclick=()=>{if(!ok())return;$('ph2').click()};
-$('bp').onclick=()=>{if(!ok())return;$('ph').click()};
+$('bp').onclick=()=>{if(!ok())return;openCam()};
 $('bm').onclick=()=>{if(!ok())return;reset();$('ed').classList.remove('hide');$('tx').focus()};
 function ok(){if(!$('op').value.trim()){alert("Saisissez le nom de l'opérateur");return false}if(!typ()){alert('Choisissez un produit (et chargez le fichier Excel)');return false}return true}
 function shrink(f){return new Promise(r=>{const i=new Image();i.onload=()=>{const k=Math.min(1,1600/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);r(c.toDataURL('image/jpeg',.75))};i.src=URL.createObjectURL(f)})}
 let sel=null,img=null,worker=null;
+/* ---- caméra avec cadre en surimpression ---- */
+let cstream=null;
+function defSel(w,h){return{x:w*(1-FW/100)/2,y:h*(1-FH/100)/2,w:w*FW/100,h:h*FH/100}}
+function layoutCam(){const v=$('camv'),b=$('cambox'),W=b.clientWidth,H=b.clientHeight,vw=v.videoWidth,vh=v.videoHeight;if(!vw||!vh)return;
+ const k=Math.min(W/vw,H/vh),cw=vw*k,ch=vh*k,f=$('camf');f.style.width=cw*FW/100+'px';f.style.height=ch*FH/100+'px';f.style.left=(W-cw)/2+cw*(1-FW/100)/2+'px';f.style.top=(H-ch)/2+ch*(1-FH/100)/2+'px'}
+async function openCam(){
+ try{cstream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false})}catch(e){$('ph').click();return}
+ const v=$('camv');v.srcObject=cstream;v.onloadedmetadata=layoutCam;await v.play().catch(()=>{});
+ $('cam').classList.remove('hide');document.body.style.overflow='hidden';$('cam1').classList.remove('hide');$('cam2').classList.add('hide');
+ const tr=cstream.getVideoTracks()[0],cp=tr.getCapabilities?tr.getCapabilities():{};$('camto').classList.toggle('hide',!cp.torch);setTimeout(layoutCam,150);layoutCam()}
+function closeCam(){if(cstream){cstream.getTracks().forEach(t=>t.stop());cstream=null}$('camv').srcObject=null;$('cam').classList.add('hide');document.body.style.overflow=''}
+let torch=false;
+$('camto').onclick=async()=>{try{torch=!torch;await cstream.getVideoTracks()[0].applyConstraints({advanced:[{torch}]})}catch(e){}};
+$('cam1').onclick=()=>{$('camv').pause();$('cam1').classList.add('hide');$('cam2').classList.remove('hide')};
+$('camre').onclick=()=>{$('camv').play();$('cam2').classList.add('hide');$('cam1').classList.remove('hide')};
+$('camx').onclick=closeCam;
+$('camok').onclick=()=>{const v=$('camv'),k=Math.min(1,1600/Math.max(v.videoWidth,v.videoHeight)),c=document.createElement('canvas');c.width=Math.round(v.videoWidth*k);c.height=Math.round(v.videoHeight*k);
+ c.getContext('2d').drawImage(v,0,0,c.width,c.height);const url=c.toDataURL('image/jpeg',.8);closeCam();takePhoto(url)};
+function takePhoto(url){reset();cur.photo=url;img=new Image();img.onload=()=>{const cv=$('cv');cv.width=img.width;cv.height=img.height;sel=defSel(img.width,img.height);draw();$('cr').classList.remove('hide');$('bo').click()};img.src=url}
+window.addEventListener('resize',()=>{if(!$('cam').classList.contains('hide'))layoutCam()});
+
 function draw(){const cv=$('cv'),x=cv.getContext('2d');x.drawImage(img,0,0);
  if(sel){x.fillStyle='rgba(0,0,0,.35)';x.fillRect(0,0,cv.width,cv.height);x.drawImage(img,sel.x,sel.y,sel.w,sel.h,sel.x,sel.y,sel.w,sel.h);
   x.strokeStyle='#ffd400';x.lineWidth=Math.max(3,cv.width/200);x.strokeRect(sel.x,sel.y,sel.w,sel.h)}}
@@ -167,7 +203,7 @@ function draw(){const cv=$('cv'),x=cv.getContext('2d');x.drawImage(img,0,0);
  cv.onpointermove=e=>{if(!st)return;const p=pt(e);sel={x:Math.min(st.x,p.x),y:Math.min(st.y,p.y),w:Math.abs(p.x-st.x),h:Math.abs(p.y-st.y)};draw()};
  cv.onpointerup=()=>{st=null;if(sel&&(sel.w<20||sel.h<20))sel=null;draw()}})();
 $('ph').onchange=$('ph2').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
- reset();cur.photo=await shrink(f);img=new Image();img.onload=()=>{const cv=$('cv');cv.width=img.width;cv.height=img.height;sel=null;draw();$('cr').classList.remove('hide')};img.src=cur.photo};
+ reset();cur.photo=await shrink(f);img=new Image();img.onload=()=>{const cv=$('cv');cv.width=img.width;cv.height=img.height;sel=defSel(img.width,img.height);draw();$('cr').classList.remove('hide')};img.src=cur.photo};
 $('bs').onclick=()=>{cur.mode='Photo + saisie manuelle';$('cr').classList.add('hide');$('ocr').textContent='Photo conservée. Saisissez le marquage ci-dessous.';$('ed').classList.remove('hide');fillCmp(cur.photo,'Photo prise');$('cmp').scrollIntoView({block:'start'})};
 function blur(g,W,H,r){let a=Float32Array.from(g),b=new Float32Array(g.length);
  for(let it=0;it<2;it++){
@@ -424,6 +460,10 @@ $('bbk').onclick=()=>{location.hash='principal'};
 $('bno').onclick=()=>{location.hash='notice'};$('bbk2').onclick=()=>{location.hash='principal'};
 $('dec').value=DEC;$('dec').oninput=()=>{DEC=parseFloat($('dec').value)||0;try{localStorage.setItem('dec2',DEC)}catch(e){};decInfo()};
 $('eng').value=ENG;$('eng').onchange=()=>{ENG=$('eng').value;try{localStorage.setItem('eng',ENG)}catch(e){}};$('bpt').onclick=testPaddle;
+function fpv(){$('vfw').textContent=FW+' %';$('vfh').textContent=FH+' %';$('fpf').style.width=FW+'%';$('fpf').style.height=FH+'%'}
+$('fw').value=FW;$('fh').value=FH;fpv();
+$('fw').oninput=()=>{FW=+$('fw').value;try{localStorage.setItem('fw',FW)}catch(e){};fpv()};
+$('fh').oninput=()=>{FH=+$('fh').value;try{localStorage.setItem('fh',FH)}catch(e){};fpv()};
 $('tol').value=TOL;$('tol').oninput=()=>{const v=parseFloat($('tol').value);TOL=isNaN(v)||v<0?0:v;try{localStorage.setItem('tol',TOL)}catch(e){}};
 window.addEventListener('hashchange',route);window.addEventListener('resize',()=>{if(!$('pg1').classList.contains('hide'))exp()});
 decInfo();
