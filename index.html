@@ -58,7 +58,7 @@ button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}b
 
 <div class="c"><h2>Historique</h2>
 <div class="r"><button id="be" class="s">Exporter tout (Excel)</button><button id="bc" class="s">Exporter non exportés</button></div>
-<div id="hs"></div></div>
+<div class="m" id="hmsg" style="margin:6px 0"></div><div id="hs"></div></div>
 </div>
 <div id="pg2" class="hide">
 <div class="th"><button id="bbk" class="s tb">← Retour</button><h1>Paramètres</h1></div>
@@ -75,6 +75,8 @@ button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}b
 <select id="eng"><option value="auto">Automatique (PaddleOCR, sinon Tesseract)</option><option value="paddle">PaddleOCR seulement</option><option value="tess">Tesseract seulement</option></select>
 <button id="bpt" class="s">Tester PaddleOCR</button><div class="m" id="pst" style="margin-top:6px"></div>
 <div class="m" style="margin-top:6px">PaddleOCR demande 2 fichiers déposés à côté de index.html : <b>model.onnx</b> (7,8 Mo) et <b>dict.txt</b> (1,4 Ko). Liens et marche à suivre : voir la Notice.</div></div>
+<div class="c"><h2>Historique</h2><label style="display:flex;align-items:center;gap:10px;color:var(--tx);font-size:15px"><input type="checkbox" id="purge" style="width:22px;height:22px;flex:none" checked> Effacer de l'historique les enregistrements exportés</label>
+<div class="m" style="margin-top:6px">Après un export Excel réussi, les contrôles exportés (avec leurs photos) sont supprimés de l'application. Décochez pour les conserver. Cochée par défaut.</div></div>
 <div class="c"><h2>Contrôle de l'heure</h2><label>Tolérance (± minutes)</label><input type="number" id="tol" step="1" min="0" max="720" value="10" inputmode="numeric">
 <div class="m" style="margin-top:4px">Quand le type de marquage imprime une heure, elle est comparée à l'horloge de l'appareil avec cette tolérance. Valeur mémorisée.</div></div>
 </div>
@@ -92,8 +94,9 @@ button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}b
 <li><b>Marquage en points</b> : utilisez « 🧪 Comparer à l'image attendue ». Vert = point attendu trouvé, rouge = point manquant, bleu = point en trop. « 👁 Masquer les points » laisse la photo d'origine. Réglez au besoin sensibilité, largeur des lettres et écarts, puis choisissez ✅ Conforme ou ❌ Non conforme.</li>
 <li><b>Saisie manuelle</b> : si la lecture échoue, recopiez le texte. Le mode « saisie manuelle » est noté dans l'historique.</li>
 <li><b>Lecture automatique</b> : l'application fait plusieurs essais à des tailles différentes et retient le lot le plus souvent lu. Si l'heure reste incertaine (chiffres petits), un avertissement s'affiche : contrôlez-la sur la photo.</li>
+<li><b>Heure lue</b> : les 4 chiffres lus juste après le lot sont pris pour les heures et minutes, même s'ils sont lus O, o, Q, D ou U (comptés comme 0) ou I (compté comme 1) : « oo 52 » devient 00:52, « 04.01 » devient 04:01.</li>
 <li><b>Résultat</b> : OK ou NON OK avec la raison (date, lot, heure, texte).</li>
-<li><b>Historique et export</b> : chaque contrôle garde nom, heure, résultat, mode et photo. Au changement de produit, l'application propose d'exporter en Excel (avec photos) les contrôles du produit précédent. Boutons d'export : tout, ou seulement les non exportés.</li></ol>
+<li><b>Historique et export</b> : chaque contrôle garde nom, heure, résultat, mode et photo. Au changement de produit, l'application propose d'exporter en Excel (avec photos) les contrôles du produit précédent. Boutons d'export : tout, ou seulement les non exportés. Dans les Paramètres, l'option « Effacer de l'historique les enregistrements exportés » (cochée par défaut) supprime de l'application les contrôles après un export réussi ; décochez-la pour les garder.</li></ol>
 <p><b>Fichier Excel</b> : colonne « Texte modèle » avec les mots-clés {DATE}, {LOT}, {HEURE} et {*} (texte quelconque). Avec {*}, la comparaison d'image n'est pas possible.</p>
 <p><b>Installer PaddleOCR (lecture locale, gratuite) — 2 fichiers à déposer</b></p>
 <ol>
@@ -116,7 +119,7 @@ Ces deux fichiers vont ensemble (même dossier « rec/english » du dépôt). Ne
 const $=id=>document.getElementById(id);
 const MOIS=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 const p2=n=>String(n).padStart(2,'0');
-let DEC=0,TOL=10,ENG='auto',FW=80,FH=20;try{FW=parseFloat(localStorage.getItem('fw'))||80;FH=parseFloat(localStorage.getItem('fh'))||20;ENG=localStorage.getItem('eng')||'auto';DEC=parseFloat(localStorage.getItem('dec2'))||0;const q=parseFloat(localStorage.getItem('tol'));if(!isNaN(q))TOL=q}catch(e){}
+let DEC=0,TOL=10,ENG='auto',FW=80,FH=20,PURGE=true;try{PURGE=localStorage.getItem('purge')!=='0';FW=parseFloat(localStorage.getItem('fw'))||80;FH=parseFloat(localStorage.getItem('fh'))||20;ENG=localStorage.getItem('eng')||'auto';DEC=parseFloat(localStorage.getItem('dec2'))||0;const q=parseFloat(localStorage.getItem('tol'));if(!isNaN(q))TOL=q}catch(e){}
 let DB={types:{},prods:[]},cur={photo:null,mode:'Manuel'},prevProd='',idb;
 try{DB=JSON.parse(localStorage.getItem('db'))||DB}catch(e){}
 try{$('op').value=localStorage.getItem('op')||''}catch(e){}
@@ -127,6 +130,7 @@ open.onupgradeneeded=()=>open.result.createObjectStore('h',{keyPath:'id',autoInc
 open.onsuccess=()=>{idb=open.result;hist()};
 const tx=(m)=>idb.transaction('h',m).objectStore('h');
 const all=()=>new Promise(r=>{const q=tx('readonly').getAll();q.onsuccess=()=>r(q.result)});
+const del=id=>new Promise(r=>{const q=tx('readwrite').delete(id);q.onsuccess=()=>r();q.onerror=()=>r()});
 const put=o=>new Promise(r=>{const q=tx('readwrite').put(o);q.onsuccess=()=>r()});
 
 /* Lecture Excel */
@@ -225,8 +229,8 @@ function prep(dots,flat,km){const r=sel||{x:0,y:0,w:img.width,h:img.height},k=Ma
  for(let i=0;i<n;i++){d.data[4*i]=d.data[4*i+1]=d.data[4*i+2]=g[i];d.data[4*i+3]=255}
  x.putImageData(d,0,0);return c.toDataURL('image/png')}
 function vote(res){const L=new Map(),T=new Map(),add=(M,k)=>M.set(k,(M.get(k)||0)+1),top=M=>[...M.entries()].sort((a,b)=>b[1]-a[1])[0];
- for(const r of res){const t=r.text.replace(/\s+/g,' '),m=t.match(/[A-Z]?\d{4} ?R/i),h=t.match(/(\d{2}) ?[:;.°'·]? ?(\d{2}) *$/);
-  if(m)add(L,m[0].replace(/ /g,'').toUpperCase());if(h)add(T,h[1]+':'+h[2])}
+ for(const r of res){const t=r.text.replace(/\s+/g,' '),m=t.match(/[A-Z]?\d{4} ?R/i),h=timeOf(t);
+  if(m)add(L,m[0].replace(/ /g,'').toUpperCase());if(h)add(T,h)}
  return{lot:top(L),time:top(T)}}
 /* ---- PaddleOCR (reconnaissance seule, sur zone recadrée) ---- */
 const PMODELS=['model.onnx','models/model.onnx','models/en_PP-OCRv4_rec_infer.onnx'],PDICTS=['dict.txt','models/dict.txt','models/en_dict.txt'];let PS=null;
@@ -298,8 +302,9 @@ $('bo').onclick=async()=>{$('bo').disabled=true;const say=m=>$('ocr').textConten
  if(best.conf<0){cur.mode='Manuel (lecture photo échouée)';$('ocr').textContent="⚠ Lecture impossible"+(why?' ('+why+')':'')+" : saisissez le texte à la main (ce sera noté dans l'historique).";$('tx').value=''}
  else{let txt=best.text,info=[used+(ENG==='auto'&&used==='Tesseract'&&why?' (PaddleOCR indisponible : '+why+')':'')];const v=vote(res),n=res.length,ty=typ();
   if(v.lot){const re=/[A-Z]?\d{4} ?R/i;if(re.test(txt))txt=txt.replace(re,v.lot[0]);info.push(`lot ${v.lot[0]} lu ${v.lot[1]}/${n} fois`)}
-  if(ty&&ty.heure){if(v.time&&v.time[1]/n>=.5){const re=/(\d{2}) ?[:;.°'·]? ?(\d{2}) *$/;txt=re.test(txt)?txt.replace(re,v.time[0]):txt.replace(/\s+$/,'')+' '+v.time[0];info.push(`heure ${v.time[0]} lue ${v.time[1]}/${n} fois`)}
-   else info.push("⚠ heure incertaine : vérifiez les chiffres sur la photo")}
+  if(ty&&ty.heure){const own=timeOf(txt);
+   if(v.time&&v.time[1]/n>=.5){txt=setTime(txt,v.time[0]);info.push(`heure ${v.time[0]} lue ${v.time[1]}/${n} fois`)}
+   else{if(own)txt=setTime(txt,own);info.push("⚠ heure incertaine : vérifiez les chiffres sur la photo")}}
   cur.mode='Photo';cur.ocr=txt;$('ocr').textContent=`Lecture terminée (${info.join(' · ')}). Vérifiez et corrigez si besoin.`;$('tx').value=txt}
  fillCmp(cropURL(),'Zone encadrée');$('cmp').scrollIntoView({behavior:'smooth',block:'start'})};
 
@@ -413,14 +418,23 @@ $('bk').onclick=()=>{if(!ok())return;const t=typ(),c=calc(t),L=olines(t,c);
 
 /* Vérification */
 const esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+/* heure = les 4 premiers chiffres lus après le lot ; O, Q, D, U comptent pour 0, I et | pour 1 */
+const LK={O:'0',Q:'0',D:'0',U:'0',I:'1','|':'1'};
+function lotMatch(t){return t.toUpperCase().match(/[A-Z]?\d{4}\s*R/)}
+function timeOf(text){const m=lotMatch(text),tail=(m?text.slice(m.index+m[0].length):text.slice(-14)).toUpperCase(),d=[];
+ for(const ch of tail){if(/\d/.test(ch))d.push(ch);else if(LK[ch])d.push(LK[ch]);if(d.length===4)break}
+ return d.length===4?d[0]+d[1]+':'+d[2]+d[3]:null}
+function setTime(text,hm){const m=lotMatch(text);return m?text.slice(0,m.index+m[0].length)+' '+hm:text.replace(/\s+$/,'')+' '+hm}
+function fixTime(text){const h=timeOf(text);return h?setTime(text,h):text}
 const norm=s=>s.toUpperCase().replace(/\s+/g,'');
 function verify(t,txt){
+ if(t.heure)txt=fixTime(txt);
  const c=calc(t),why=[],T=norm(txt);let heure='';
  if(c.date&&!T.includes(c.date.toUpperCase()))why.push(`Date attendue « ${c.date} » introuvable`);
  if(!T.includes(c.lot))why.push(`Lot attendu « ${c.lot} » introuvable`);
  if(t.heure){const m=T.match(/(\d{1,2})\s*[:;.H]\s*(\d{2})/);
   if(!m)why.push('Heure introuvable dans le texte lu');
-  if(m){heure=`${m[0]}`;const n=new Date(),a=n.getHours()*60+n.getMinutes(),b=+m[1]*60+ +m[2];let d=Math.abs(a-b);d=Math.min(d,1440-d);
+  if(m){heure=`${m[1]}:${m[2]}`;const n=new Date(),a=n.getHours()*60+n.getMinutes(),b=+m[1]*60+ +m[2];let d=Math.abs(a-b);d=Math.min(d,1440-d);
    if(d>TOL)why.push(`Heure ${heure} : écart de ${d} min avec l'appareil (max ${TOL})`)}}
  if(t.tpl&&!why.length){let r=esc(norm(t.tpl.replace(/\{DATE\}/g,c.date).replace(/\{LOT\}/g,c.lot))).replace(/\\\{HEURE\\\}/g,'\\d{1,2}[:;.H]\\d{2}').replace(/\\\{\\\*\\\}/g,'.*');
   if(!new RegExp('^'+r+'$').test(T)){
@@ -449,7 +463,9 @@ async function exportX(rows,name){
  const buf=await wb.xlsx.writeBuffer(),a=document.createElement('a');
  a.href=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
  a.download=`controles_${name.replace(/[^\w-]+/g,'_')}_${new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')}.xlsx`;a.click();
- for(const r of rows){r.exp=true;await put(r)}}
+ if(PURGE){for(const r of rows)await del(r.id);$('hmsg').textContent=`${rows.length} contrôle(s) exporté(s) et effacé(s) de l'historique.`}
+ else{for(const r of rows){r.exp=true;await put(r)}$('hmsg').textContent=`${rows.length} contrôle(s) exporté(s) (conservés dans l'historique).`}
+ hist()}
 $('be').onclick=async()=>{const r=await all();if(r.length)exportX(r,'tout');else alert('Aucun contrôle')};
 $('bc').onclick=async()=>{const r=(await all()).filter(x=>!x.exp);if(r.length)exportX(r,'nouveaux');else alert('Rien à exporter')};
 const hh=m=>p2(Math.floor(m/60))+':'+p2(m%60);
@@ -464,6 +480,7 @@ function fpv(){$('vfw').textContent=FW+' %';$('vfh').textContent=FH+' %';$('fpf'
 $('fw').value=FW;$('fh').value=FH;fpv();
 $('fw').oninput=()=>{FW=+$('fw').value;try{localStorage.setItem('fw',FW)}catch(e){};fpv()};
 $('fh').oninput=()=>{FH=+$('fh').value;try{localStorage.setItem('fh',FH)}catch(e){};fpv()};
+$('purge').checked=PURGE;$('purge').onchange=()=>{PURGE=$('purge').checked;try{localStorage.setItem('purge',PURGE?'1':'0')}catch(e){}};
 $('tol').value=TOL;$('tol').oninput=()=>{const v=parseFloat($('tol').value);TOL=isNaN(v)||v<0?0:v;try{localStorage.setItem('tol',TOL)}catch(e){}};
 window.addEventListener('hashchange',route);window.addEventListener('resize',()=>{if(!$('pg1').classList.contains('hide'))exp()});
 decInfo();
