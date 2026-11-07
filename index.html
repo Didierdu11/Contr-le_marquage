@@ -21,6 +21,8 @@ button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}b
 .res{font-size:22px;font-weight:700;padding:10px;border-radius:8px;text-align:center;color:#fff}.ok{background:var(--ok)}.ko{background:var(--ko)}
 .h{display:flex;gap:8px;border-top:1px solid var(--bd);padding:8px 0;font-size:13px}.h img{width:48px;height:48px;object-fit:cover;border-radius:6px}
 .hide{display:none}
+.big{min-height:56px;font-size:18px;width:100%}.gr{background:#1b7f3b;min-height:56px;font-size:18px;margin-top:12px}.or{background:#e67e22;min-height:56px;font-size:16px;margin-top:12px}
+.bad{background:#c0392b;color:#fff;border-radius:10px;padding:12px;margin-top:12px;font-size:15px}.bad ul{margin:6px 0 0;padding-left:20px}.rd{color:var(--ko);border-color:var(--ko);min-height:48px}.wn{background:#e67e22}
 .sr{border:1px solid var(--bd);border-radius:10px;padding:8px 10px;margin:6px 0}.sr summary{cursor:pointer;font-weight:600;font-size:14px}.sr .sx{margin:8px 0 4px;padding:8px}.sr summary .m{font-weight:400}
 .mb{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}.mb.hide{display:none}
 .md{background:var(--card);color:var(--tx);border-radius:14px;padding:18px;max-width:420px;width:100%}.md h3{margin:0 0 8px;font-size:17px;color:var(--ac)}.md p{margin:0 0 12px;font-size:15px;white-space:pre-line}
@@ -50,8 +52,9 @@ button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}b
 
 <div class="c" id="ctl"><h2>2. Contrôle</h2>
 <div id="pvw" class="hide"><div class="m" id="pcap"></div><div id="pv"></div></div>
-<div class="r"><button id="bp">📷 Photo</button><button id="bm" class="s">⌨️ Saisie manuelle</button></div>
-<button id="bi" class="s">🖼️ Importer une photo (galerie / fichier)</button>
+<button id="bp" class="big">📷 Scan lot</button>
+<button id="bm" class="s big hide">⌨️ Saisie manuelle</button>
+<button id="bi" class="s big hide">🖼️ Importer une photo (galerie / fichier)</button>
 <div class="m" style="margin-top:6px">Astuce : photographiez de près, avec des caractères bien grands et nets.</div>
 <input type="file" id="ph" accept="image/*" capture="environment" class="hide"><input type="file" id="ph2" accept="image/*" class="hide">
 <div id="ocr" class="m"></div>
@@ -59,7 +62,7 @@ button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}b
 <canvas id="cv" style="max-width:100%;max-height:56vh;margin:0 auto;touch-action:none;border-radius:8px;display:block"></canvas>
 <div style="position:sticky;bottom:0;background:var(--card);padding:6px 0;z-index:5"><div class="r"><button id="bo">🔍 Lire la zone</button><button id="bs" class="s">Saisir à la main</button></div><button id="bk" class="s">🧪 Comparer à l'image attendue (sans lecture)</button></div></div>
 <div id="ed" class="hide"><div id="cmp"></div><label>Corrigez si besoin :</label><textarea id="tx" rows="4" class="k"></textarea>
-<button id="bv">Vérifier et enregistrer</button><button id="bb" class="s">↩ Redessiner le cadre</button></div>
+<div id="vd"></div><button id="bb" class="s" style="margin-top:12px">↩ Redessiner le cadre</button></div>
 <div id="ov" class="hide"></div><div id="out" style="margin-top:10px"></div></div>
 
 <div class="c"><h2 id="hh">Historique (0)</h2>
@@ -72,6 +75,10 @@ button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}b
 <div class="c"><h2>Changement du numéro de lot</h2><label>Décalage (heures, + ou −)</label><input type="number" id="dec" step="0.25" min="-24" max="24" value="0" inputmode="decimal">
 <div class="m" id="decm" style="margin-top:6px;font-weight:600"></div>
 <div class="m" style="margin-top:4px">Le n° du jour du lot change à 00h00 + ce décalage. Exemples : −5 → 19h00 la veille ; −4,5 → 19h30 la veille ; 0 → 00h00 ; +2 → 02h00. La valeur est mémorisée dans l'application.</div></div>
+<div class="c"><h2>Boutons du contrôle</h2>
+<label style="display:flex;align-items:center;gap:10px;color:var(--tx);font-size:15px"><input type="checkbox" id="showman" style="width:22px;height:22px;flex:none"> Afficher le bouton « Saisie manuelle »</label>
+<label style="display:flex;align-items:center;gap:10px;color:var(--tx);font-size:15px;margin-top:10px"><input type="checkbox" id="showimp" style="width:22px;height:22px;flex:none"> Afficher le bouton « Importer une photo »</label>
+<div class="m" style="margin-top:6px">Décochés par défaut. Le bouton « Scan lot » est toujours affiché.</div></div>
 <div class="c"><h2>Cadre de prise de photo</h2>
 <label>Largeur du cadre : <b id="vfw"></b></label><input type="range" id="fw" min="20" max="100" step="1" value="80">
 <label>Hauteur du cadre : <b id="vfh"></b></label><input type="range" id="fh" min="5" max="60" step="1" value="20">
@@ -95,13 +102,13 @@ button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}b
 <li><b>Tolérance de l'heure</b> : quand le type imprime une heure, elle doit être à ± N minutes de l'horloge de l'appareil. N se règle dans les Paramètres (10 par défaut).</li>
 <li><b>Opérateur et produit</b> : saisissez votre nom puis choisissez le produit. Son type de marquage s'affiche dessous.</li>
 <li><b>Aperçu</b> : dans « Contrôle », le cadre blanc montre exactement ce que le carton doit afficher maintenant (lot, date, heure). L1, L2… = lignes du carton. ↵ / ↳ indique la suite de la même ligne, coupée faute de place.</li>
-<li><b>Photo</b> : « 📷 Photo » ouvre la caméra avec un <b>cadre jaune en surimpression</b>. Placez le marquage dans le cadre, de près et net, touchez « 📸 Prendre la photo », puis « ✅ Valider » (ou « ↺ Reprendre »). La lecture de la zone du cadre démarre alors toute seule et vous arrivez directement sur la zone de contrôle. Largeur et hauteur du cadre se règlent dans les Paramètres. « 🖼️ Importer » prend une image existante : le cadre par défaut est posé au centre, vous pouvez le redessiner.</li>
+<li><b>Photo</b> : « 📷 Scan lot » ouvre la caméra avec un <b>cadre jaune en surimpression</b>. Placez le marquage dans le cadre, de près et net, touchez « 📸 Prendre la photo », puis « ✅ Valider » (ou « ↺ Reprendre »). La lecture de la zone du cadre et la vérification démarrent alors toutes seules : vous arrivez sur la zone de contrôle avec le résultat. Largeur et hauteur du cadre se règlent dans les Paramètres. Les boutons « Saisie manuelle » et « 🖼️ Importer une photo » sont masqués par défaut : cochez-les dans les Paramètres pour les afficher.</li>
 <li><b>Cadre (si besoin de le modifier)</b> : « ↩ Redessiner le cadre » ou après une importation, entourez du doigt uniquement le marquage, puis « 🔍 Lire la zone » (boutons toujours visibles en bas). L'écran montre : ① ce que vous devez avoir, ② la zone encadrée, ③ ce que l'application lit. Corrigez le texte si besoin puis « Vérifier et enregistrer ».</li>
 <li><b>Marquage en points</b> : utilisez « 🧪 Comparer à l'image attendue ». Vert = point attendu trouvé, rouge = point manquant, bleu = point en trop. « 👁 Masquer les points » laisse la photo d'origine. Réglez au besoin sensibilité, largeur des lettres et écarts, puis choisissez ✅ Conforme ou ❌ Non conforme.</li>
-<li><b>Saisie manuelle</b> : si la lecture échoue, recopiez le texte. Le mode « saisie manuelle » est noté dans l'historique.</li>
+<li><b>Saisie manuelle</b> (bouton à activer dans les Paramètres) : recopiez le texte du marquage ; la vérification et les boutons de validation s'affichent comme pour un scan.</li>
 <li><b>Lecture automatique</b> : l'application fait plusieurs essais à des tailles différentes et retient le lot le plus souvent lu. Si l'heure reste incertaine (chiffres petits), un avertissement s'affiche : contrôlez-la sur la photo.</li>
 <li><b>Heure lue</b> : les 4 chiffres lus juste après le lot sont pris pour les heures et minutes, même s'ils sont lus O, o, Q, D ou U (comptés comme 0) ou I (compté comme 1) : « oo 52 » devient 00:52, « 04.01 » devient 04:01.</li>
-<li><b>Résultat</b> : OK ou NON OK avec la raison (date, lot, heure, texte).</li>
+<li><b>Résultat</b> : sous les 3 zones (① attendu, ② zone encadrée, ③ lu), un bouton vert <b>« ✅ Scan conforme »</b> apparaît si tout correspond : il enregistre le contrôle « validé en auto ». Sinon le message rouge <b>« Scan non conforme »</b> donne la raison, avec le bouton orange <b>« Vérifier visuellement le bon numéro de lot pour validation »</b> : après avoir regardé le carton, il enregistre le contrôle « validé manuellement » (repris dans l'onglet Anomalies de l'export). Le bouton « Enregistrer comme non conforme » enregistre un carton réellement erroné. Corriger le texte ③ relance la vérification.</li>
 <li><b>Séries et export</b> : tant que vous restez sur le même produit, ses enregistrements restent dans « En cours ». Quand vous <b>changez de produit</b>, l'application exporte automatiquement en Excel les enregistrements du produit précédent (un fichier : onglets Contrôles, Statistiques, Anomalies) puis les range dans une liste repliable « Séries exportées », repérée par produit et lot. Seules les 3 dernières séries sont conservées (réglable dans les Paramètres). Le bouton « Exporter les enregistrements en cours » fait une copie Excel sans changer l'historique ; « Exporter à nouveau » refait l'export d'une série.</li></ol>
 <p><b>Fichier Excel</b> : colonne « Texte modèle » avec les mots-clés {DATE}, {LOT}, {HEURE} et {*} (texte quelconque). Avec {*}, la comparaison d'image n'est pas possible.</p>
 <p><b>Installer PaddleOCR (lecture locale, gratuite) — 2 fichiers à déposer</b></p>
@@ -122,7 +129,7 @@ Ces deux fichiers vont ensemble (même dossier « rec/english » du dépôt). Ne
 <div id="camt">Placez le marquage dans le cadre jaune, de près et net</div>
 <div id="camb"><button id="cam1">📸 Prendre la photo</button><div class="r hide" id="cam2"><button id="camok">✅ Valider</button><button id="camre" class="s">↺ Reprendre</button></div>
 <div class="r"><button id="camto" class="s hide">🔦 Lampe</button><button id="camx" class="s">✖ Annuler</button></div></div></div>
-<div id="ft">© D@V · Version 1.1 · 07/11/2026</div>
+<div id="ft">© D@V · Version 1.2 · 07/11/2026</div>
 <div id="mb" class="mb hide"><div class="md"><h3 id="mt"></h3><p id="mm"></p><div class="r"><button id="mc" class="s hide"></button><button id="mo">OK</button></div></div></div>
 <script>
 const $=id=>document.getElementById(id);
@@ -131,7 +138,7 @@ function dlg(msg,title,ok,cancel){return new Promise(res=>{$('mt').textContent=t
 const info=(m,t)=>dlg(m,t||'Information'),ask=(m,t,o,c)=>dlg(m,t,o||'Oui',c||'Non');
 const MOIS=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 const p2=n=>String(n).padStart(2,'0');
-let DEC=0,TOL=10,ENG='auto',FW=80,FH=20,KEEP=3;try{const kq=parseInt(localStorage.getItem('keep'));if(!isNaN(kq))KEEP=kq;FW=parseFloat(localStorage.getItem('fw'))||80;FH=parseFloat(localStorage.getItem('fh'))||20;ENG=localStorage.getItem('eng')||'auto';DEC=parseFloat(localStorage.getItem('dec2'))||0;const q=parseFloat(localStorage.getItem('tol'));if(!isNaN(q))TOL=q}catch(e){}
+let DEC=0,TOL=10,ENG='auto',FW=80,FH=20,KEEP=3,SM=false,SI=false;try{SM=localStorage.getItem('showman')==='1';SI=localStorage.getItem('showimp')==='1';const kq=parseInt(localStorage.getItem('keep'));if(!isNaN(kq))KEEP=kq;FW=parseFloat(localStorage.getItem('fw'))||80;FH=parseFloat(localStorage.getItem('fh'))||20;ENG=localStorage.getItem('eng')||'auto';DEC=parseFloat(localStorage.getItem('dec2'))||0;const q=parseFloat(localStorage.getItem('tol'));if(!isNaN(q))TOL=q}catch(e){}
 let DB={types:{},prods:[]},cur={photo:null,mode:'Manuel'},prevProd='',idb;
 try{DB=JSON.parse(localStorage.getItem('db'))||DB}catch(e){}
 try{$('op').value=localStorage.getItem('op')||''}catch(e){}
@@ -180,7 +187,7 @@ $('pr').onchange=async()=>{const n=$('pr').value;try{localStorage.setItem('prod'
  if(prevProd&&n!==prevProd){const old=prevProd;prevProd=n;await closeSerie(old)}
  prevProd=n;exp();reset()};
 $('op').oninput=()=>{try{localStorage.setItem('op',$('op').value)}catch(e){}};
-function reset(){cur={photo:null,mode:'Manuel'};$('ov').className='hide';$('ed').classList.add('hide');$('cr').classList.add('hide');$('tx').value='';$('out').innerHTML='';$('ocr').textContent='';$('cmp').innerHTML=''}
+function reset(){cur={photo:null,mode:'Manuel'};$('ov').className='hide';$('ed').classList.add('hide');$('cr').classList.add('hide');$('tx').value='';$('out').innerHTML='';$('ocr').textContent='';$('cmp').innerHTML='';$('vd').innerHTML=''}
 
 /* Photo + OCR */
 $('bi').onclick=()=>{if(!ok())return;$('ph2').click()};
@@ -318,7 +325,7 @@ $('bo').onclick=async()=>{$('bo').disabled=true;const say=m=>$('ocr').textConten
    if(v.time&&v.time[1]/n>=.5){txt=setTime(txt,v.time[0]);info.push(`heure ${v.time[0]} lue ${v.time[1]}/${n} fois`)}
    else{if(own)txt=setTime(txt,own);info.push("⚠ heure incertaine : vérifiez les chiffres sur la photo")}}
   cur.mode='Photo';cur.ocr=txt;$('ocr').textContent=`Lecture terminée (${info.join(' · ')}). Vérifiez et corrigez si besoin.`;$('tx').value=txt}
- fillCmp(cropURL(),'Zone encadrée');$('cmp').scrollIntoView({behavior:'smooth',block:'start'})};
+ fillCmp(cropURL(),'Zone encadrée');showVerdict();$('cmp').scrollIntoView({behavior:'smooth',block:'start'})};
 
 const mc=document.createElement('canvas').getContext('2d');
 function renderPrev(box,text){box.className='pvb';box.textContent='';
@@ -422,7 +429,7 @@ function updOCV(){const{L,t,c}=OS,sens=$('rs').value/100,ratio=$('rw').value/100
 async function decide(good){if(!ocv)return;const{t,c}=OS;
  const why=[];if(ocv.ok!==good)why.push(`Décision opérateur différente du verdict auto (${ocv.ok?'OK':'NON OK'})`);
  if(!good)why.push("Jugé non conforme par l'opérateur");
- const rec={ts:new Date().toISOString(),op:$('op').value.trim(),prod:$('pr').value,type:t.name,lot:c.lot,date:c.date,txt:ocv.txt,res:good?'OK':'NON OK',why:why.join(' ; '),mode:`Comparaison image (auto ${ocv.ok?'OK':'NON OK'}, mini ${ocv.mn} %, moy. ${ocv.avg} %)`,photo:cur.photo||'',exp:false};
+ const rec={ts:new Date().toISOString(),op:$('op').value.trim(),prod:$('pr').value,type:t.name,lot:c.lot,date:c.date,txt:ocv.txt,res:good?'OK':'NON OK',why:why.join(' ; '),val:good?(ocv.ok?'auto':'manuelle'):'rejete',auto:ocv.ok?'OK':'NON OK',mode:`Comparaison image (auto ${ocv.ok?'OK':'NON OK'}, mini ${ocv.mn} %, moy. ${ocv.avg} %)`,photo:cur.photo||'',exp:false};
  await put(rec);$('ov').innerHTML=`<div class="res ${good?'ok':'ko'}">${good?'OK':'NON OK'} enregistré</div>`;hist();$('cr').classList.add('hide')}
 $('bk').onclick=()=>{if(!ok())return;const t=typ(),c=calc(t),L=olines(t,c);
  if(!L){info('Ce type contient {*} (texte variable) : la comparaison d\'image est impossible. Utilisez la lecture ou la saisie.','Comparaison impossible');return}
@@ -454,13 +461,21 @@ function verify(t,txt){
    else{const hm=(T.match(/(\d{1,2})[:;.H](\d{2})/)||[''])[0],E=norm(t.tpl.replace(/\{DATE\}/g,c.date).replace(/\{LOT\}/g,c.lot).replace(/\{HEURE\}/g,hm)),sm=sim(E,T);
     if(sm<.7)why.push(`Le texte lu diffère du modèle (similarité ${Math.round(sm*100)} %)`)}}}
  return{c,why,heure}}
-$('bv').onclick=async()=>{if(!ok())return;const txt=$('tx').value;if(!txt.trim()){info('Aucun texte à vérifier : lisez la zone ou saisissez le texte.','Texte manquant');return}
-  if(cur.mode==='Photo'&&txt.trim()!==(cur.ocr||'').trim())cur.mode='Photo + corrigé manuellement';
- const t=typ(),v=verify(t,txt),good=!v.why.length;
- const rec={ts:new Date().toISOString(),op:$('op').value.trim(),prod:$('pr').value,type:t.name,lot:v.c.lot,date:v.c.date,txt,res:good?'OK':'NON OK',why:v.why.join(' ; '),mode:cur.mode,photo:cur.photo||'',exp:false};
- await put(rec);
- $('out').innerHTML=`<div class="res ${good?'ok':'ko'}">${good?'OK':'NON OK'}</div>`+(good?'':`<div style="margin-top:8px">${v.why.map(x=>'• '+x).join('<br>')}</div>`);
- hist();$('ed').classList.add('hide')};
+const vl=r=>r.val==='manuelle'?'Validé manuellement':r.val==='rejete'?'Rejeté (non conforme)':r.val==='auto'?'Validé en auto':'';
+function verdict(){const t=typ(),txt=$('tx').value;if(!t||!txt.trim())return null;const v=verify(t,txt);return{v,ok:!v.why.length,txt:t.heure?fixTime(txt):txt}}
+function showVerdict(){const o=$('vd');o.innerHTML='';const r=verdict();if(!r)return;
+ const mk=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt)e.textContent=txt;return e};
+ if(r.ok){const b=mk('button','gr','✅ Scan conforme');b.onclick=()=>saveScan('auto');o.append(b);return}
+ const bad=mk('div','bad');bad.append(mk('b','','Scan non conforme'));const ul=mk('ul','');r.v.why.forEach(w=>ul.append(mk('li','',w)));bad.append(ul);
+ const bm=mk('button','or','Vérifier visuellement le bon numéro de lot pour validation');bm.onclick=()=>saveScan('manuelle');
+ const bk=mk('button','s rd','Enregistrer comme non conforme');bk.onclick=()=>saveScan('rejete');o.append(bad,bm,bk)}
+$('tx').oninput=showVerdict;
+async function saveScan(kind){if(!ok())return;const r=verdict();if(!r)return;const t=typ(),c=calc(t);let mode=cur.mode;
+ if(mode==='Photo'&&$('tx').value.trim()!==(cur.ocr||'').trim())mode='Photo + corrigé manuellement';
+ const rec={ts:new Date().toISOString(),op:$('op').value.trim(),prod:$('pr').value,type:t.name,lot:c.lot,date:c.date,txt:r.txt,res:kind==='rejete'?'NON OK':'OK',val:kind,auto:r.ok?'OK':'NON OK',why:r.ok?'':r.v.why.join(' ; '),mode,photo:cur.photo||'',exp:false};
+ await put(rec);reset();
+ const lab={auto:['ok','Enregistré — validé en auto'],manuelle:['wn','Enregistré — validé manuellement'],rejete:['ko','Enregistré — non conforme']}[kind];
+ $('out').innerHTML=`<div class="res ${lab[0]}">${lab[1]}</div>`;await hist();$('pvw').scrollIntoView({block:'start'})}
 
 /* Historique et export */
 const dfr=x=>new Date(x).toLocaleString('fr-FR'),p2s=n=>String(n).padStart(2,'0');
@@ -469,11 +484,11 @@ const serieList=A=>{const m=new Map();for(const r of A)if(r.serie){if(!m.has(r.s
 let SER=[];
 async function hist(){const A=await all(),C=A.filter(r=>!r.serie).sort((a,b)=>a.ts<b.ts?1:-1);SER=serieList(A);
  $('hh').textContent=`Historique (${C.length} en cours)`;
- const it=r=>`<div class="h">${r.photo?`<img src="${r.photo}">`:'<div style="width:48px"></div>'}<div><b style="color:var(--${r.res==='OK'?'ok':'ko'})">${r.res}</b> ${r.prod} · ${r.lot}<br>${dfr(r.ts)} · ${r.op}<br><span class="m">${r.mode}${r.why?' — '+r.why:''}</span></div></div>`;
+ const it=r=>`<div class="h">${r.photo?`<img src="${r.photo}">`:'<div style="width:48px"></div>'}<div><b style="color:var(--${r.res==='OK'?'ok':'ko'})">${r.res}</b> ${r.prod} · ${r.lot}<br>${dfr(r.ts)} · ${r.op}<br><span class="m">${vl(r)?vl(r)+' · ':''}${r.mode}${r.why?' — '+r.why:''}</span></div></div>`;
  let h=`<div class="m" style="margin:8px 0 4px"><b>En cours${C.length?' — '+[...new Set(C.map(r=>r.prod))].join(', '):''}</b></div>`+(C.slice(0,30).map(it).join('')||'<div class="m">Aucun enregistrement en cours</div>')+(C.length>30?`<div class="m">… et ${C.length-30} autre(s), inclus dans l'export</div>`:'');
  if(SER.length){h+=`<div class="m" style="margin:14px 0 4px"><b>Séries exportées (${SER.length} conservée${SER.length>1?'s':''} sur ${KEEP})</b></div>`;
   SER.forEach((s,i)=>{const lots=[...new Set(s.rs.map(r=>r.lot))].join(', '),ok=s.rs.filter(r=>r.res==='OK').length;
-   h+=`<details class="sr"><summary>${s.rs[0].prod} / lot ${lots}<br><span class="m">${s.rs.length} enreg. · ${ok} OK · ${s.rs.length-ok} NON OK · exportée le ${dfr(s.id.split('|')[0])}</span></summary><button class="s sx" data-i="${i}">Exporter à nouveau</button>${[...s.rs].reverse().map(it).join('')}</details>`})}
+   h+=`<details class="sr"><summary>${s.rs[0].prod} / lot ${lots}<br><span class="m">${s.rs.length} enreg. · ${ok} OK${s.rs.some(r=>r.val==='manuelle')?` (dont ${s.rs.filter(r=>r.val==='manuelle').length} manuel)`:''} · ${s.rs.length-ok} NON OK · exportée le ${dfr(s.id.split('|')[0])}</span></summary><button class="s sx" data-i="${i}">Exporter à nouveau</button>${[...s.rs].reverse().map(it).join('')}</details>`})}
  $('hs').innerHTML=h;
  document.querySelectorAll('.sx').forEach(b=>b.onclick=async()=>{try{await exportX(SER[+b.dataset.i].rs)}catch(e){info("L'export Excel a échoué : "+e.message,'Export impossible')}})}
 async function prune(){const S=serieList(await all());for(const s of S.slice(KEEP))for(const r of s.rs)await del(r.id)}
@@ -490,21 +505,21 @@ function statsOf(rows){
  const tab=f=>{const m=new Map();R.forEach((r,i)=>{const k=f(r);if(!m.has(k))m.set(k,[]);m.get(k).push(i)});
   return[...m.entries()].map(([k,ix])=>{const ok=ix.filter(i=>R[i].res==='OK').length;return[k,{n:ix.length,ok,ko:ix.length-ok,first:T[ix[0]],last:T[ix[ix.length-1]]}]}).sort((a,b)=>b[1].n-a[1].n)};
  const ok=R.filter(r=>r.res==='OK').length,rs=new Map();
- R.filter(r=>r.res!=='OK').forEach(r=>(r.why||'').split(' ; ').filter(Boolean).forEach(w=>{const c=reasonCat(w);rs.set(c,(rs.get(c)||0)+1)}));
+ R.filter(r=>r.res!=='OK'||r.val==='manuelle').forEach(r=>(r.why||'').split(' ; ').filter(Boolean).forEach(w=>{const c=reasonCat(w);rs.set(c,(rs.get(c)||0)+1)}));
  const hours=new Array(24).fill(0);T.forEach(t=>hours[new Date(t).getHours()]++);
  const empty=[];cov.forEach((c,k)=>{if(!c)empty.push(t0+k*9e5)});
- return{n,t0,t1,dur,slots,covered:slots-empty.length,empty,ok,ko:n-ok,gapAvg:gaps.length?gaps.reduce((a,b)=>a+b,0)/gaps.length:0,gapMax:gaps.length?Math.max(...gaps):0,g15:gaps.filter(g=>g>15).length,g30:gaps.filter(g=>g>30).length,
+ return{n,t0,t1,dur,slots,covered:slots-empty.length,empty,ok,ko:n-ok,man:R.filter(r=>r.val==='manuelle').length,auto:R.filter(r=>r.res==='OK'&&r.val!=='manuelle').length,gapAvg:gaps.length?gaps.reduce((a,b)=>a+b,0)/gaps.length:0,gapMax:gaps.length?Math.max(...gaps):0,g15:gaps.filter(g=>g>15).length,g30:gaps.filter(g=>g>30).length,
   byOp:tab(r=>r.op||'—'),byProd:tab(r=>r.prod||'—'),byLot:tab(r=>r.lot||'—'),byMode:tab(r=>(r.mode||'—').replace(/\s*\(.*\)$/,'')),reasons:[...rs.entries()].sort((a,b)=>b[1]-a[1]),hours}}
 const HDR={type:'pattern',pattern:'solid',fgColor:{argb:'FFEFE6DD'}};
 async function exportX(rows){
  const R=[...rows].sort((a,b)=>a.ts<b.ts?-1:1),prods=[...new Set(R.map(r=>r.prod))],label=prods.length===1?prods[0]:'Plusieurs produits',n=R.length,now=new Date();
- const H=['Date/heure','Opérateur','Produit','Type','Lot attendu','Date attendue','Texte lu','Résultat','Raison','Mode','Photo'],Wd=[19,16,22,12,12,14,30,10,34,24,16];
+ const H=['Date/heure','Opérateur','Produit','Type','Lot attendu','Date attendue','Texte lu','Résultat','Validation','Raison','Mode','Photo'],Wd=[19,16,22,12,12,14,30,10,22,34,24,16];
  const wb=new ExcelJS.Workbook(),img=new Map();R.forEach((r,i)=>{if(r.photo)img.set(i,wb.addImage({base64:r.photo,extension:'jpeg'}))});
- const line=r=>[dfr(r.ts),r.op,r.prod,r.type,r.lot,r.date,r.txt,r.res,r.why,r.mode,''];
+ const line=r=>[dfr(r.ts),r.op,r.prod,r.type,r.lot,r.date,r.txt,r.res,vl(r),r.why,r.mode,''];
  const head=(ws,title,sub)=>{ws.columns=Wd.map(width=>({width}));ws.addRow([title]);ws.mergeCells(1,1,1,H.length);ws.getRow(1).font={bold:true,size:16};ws.getRow(1).height=28;
   ws.addRow([sub]);ws.mergeCells(2,1,2,H.length);const h=ws.addRow(H);h.font={bold:true};H.forEach((_,i)=>{h.getCell(i+1).fill=HDR})};
  const fill=(ws,items)=>items.forEach(([r,i],k)=>{const x=ws.addRow(line(r));x.height=80;x.alignment={vertical:'top',wrapText:true};
-  if(r.res!=='OK')x.getCell(8).font={bold:true,color:{argb:'FFC0392B'}};if(img.has(i))ws.addImage(img.get(i),{tl:{col:10,row:3+k},ext:{width:100,height:100}})});
+  if(r.res!=='OK')x.getCell(8).font={bold:true,color:{argb:'FFC0392B'}};if(r.val==='manuelle')x.getCell(9).font={bold:true,color:{argb:'FFE67E22'}};if(img.has(i))ws.addImage(img.get(i),{tl:{col:H.length-1,row:3+k},ext:{width:100,height:100}})});
  // 1. Contrôles
  const w1=wb.addWorksheet('Contrôles');head(w1,'Contrôle marquage — '+label,`${n} enregistrement${n>1?'s':''} · exporté le ${dfr(now)}`);fill(w1,R.map((r,i)=>[r,i]));w1.views=[{state:'frozen',ySplit:3}];
  // 2. Statistiques
@@ -517,19 +532,19 @@ async function exportX(rows){
  tit('Réalisation (1 enregistrement tous les quarts d\'heure)');kv('Enregistrements réalisés',S.n);kv('Enregistrements prévus (durée ÷ 15 min + 1)',S.slots);kv('Écart réalisé − prévu',S.n-S.slots);
  kv('Concordance réalisé / prévu',S.n/S.slots,'0.0%');kv('Créneaux de 15 min couverts',`${S.covered} / ${S.slots}`);kv('Taux de créneaux couverts',S.covered/S.slots,'0.0%');kv('Créneaux de 15 min sans contrôle',S.empty.length);
  kv('Intervalle moyen entre contrôles (min)',Math.round(S.gapAvg*10)/10);kv('Intervalle le plus long (min)',Math.round(S.gapMax*10)/10);kv('Intervalles supérieurs à 15 min',S.g15);kv('Intervalles supérieurs à 30 min',S.g30);
- tit('Résultats');kv('Conformes (OK)',S.ok);kv('Non conformes (NON OK)',S.ko);kv('Taux de conformité',S.ok/S.n,'0.0%');
+ tit('Résultats');kv('Conformes (OK)',S.ok);kv('   dont validés en auto',S.auto);kv('   dont validés manuellement (anomalie détectée par le scan)',S.man);kv('Non conformes rejetés (NON OK)',S.ko);kv('Taux de conformité',S.ok/S.n,'0.0%');
  const ft=m=>dfr(m),row=([k,v])=>[k,v.n,v.ok,v.ko,v.ok/v.n,ft(v.first),ft(v.last)];
  tb('Par opérateur',['Opérateur','Enregistrements','OK','NON OK','Conformité','Premier','Dernier'],S.byOp.map(row));
  if(S.byProd.length>1)tb('Par produit',['Produit','Enregistrements','OK','NON OK','Conformité','Premier','Dernier'],S.byProd.map(row));
  tb('Par lot',['Lot','Enregistrements','OK','NON OK','Conformité','Premier','Dernier'],S.byLot.map(row));
  tb('Par mode de lecture',['Mode','Enregistrements','OK','NON OK','Conformité','Premier','Dernier'],S.byMode.map(row));
- tb('Anomalies par motif',['Motif','Occurrences'],S.reasons.length?S.reasons:[['Aucune anomalie',0]]);
+ tb('Motifs des anomalies (rejetés et validés manuellement)',['Motif','Occurrences'],S.reasons.length?S.reasons:[['Aucune anomalie',0]]);
  tb('Répartition par heure de la journée',['Heure','Enregistrements'],S.hours.map((c,h)=>[`${p2s(h)}h`,c]).filter(x=>x[1]>0));
  tb('Créneaux de 15 min sans contrôle'+(S.empty.length>150?' (150 premiers)':''),['Début du créneau'],S.empty.length?S.empty.slice(0,150).map(t=>[dfr(t)]):[['Aucun : tous les créneaux sont couverts']]);
  w2.eachRow(r=>{[5].forEach(c=>{const v=r.getCell(c).value;if(typeof v==='number'&&v<=1&&r.getCell(2).value>0)r.getCell(c).numFmt='0.0%'})});
  // 3. Anomalies
- const bad=R.map((r,i)=>[r,i]).filter(x=>x[0].res!=='OK'),w3=wb.addWorksheet('Anomalies');
- head(w3,'Anomalies — '+label,bad.length?`${bad.length} enregistrement${bad.length>1?'s':''} non conforme${bad.length>1?'s':''} sur ${n}`:`Aucune anomalie sur ${n} enregistrements`);fill(w3,bad);w3.views=[{state:'frozen',ySplit:3}];
+ const bad=R.map((r,i)=>[r,i]).filter(x=>x[0].res!=='OK'||x[0].val==='manuelle'),w3=wb.addWorksheet('Anomalies');
+ head(w3,'Anomalies — '+label,bad.length?`${bad.length} anomalie${bad.length>1?'s':''} sur ${n} enregistrements : ${bad.filter(x=>x[0].res!=='OK').length} non conforme(s) rejeté(s), ${bad.filter(x=>x[0].res==='OK').length} validé(s) manuellement`:`Aucune anomalie sur ${n} enregistrements`);fill(w3,bad);w3.views=[{state:'frozen',ySplit:3}];
  const buf=await wb.xlsx.writeBuffer(),a=document.createElement('a'),stamp=`${now.getFullYear()}-${p2s(now.getMonth()+1)}-${p2s(now.getDate())} ${p2s(now.getHours())}h${p2s(now.getMinutes())}`;
  a.href=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
  a.download=`Contrôle marquage - ${label} - ${n} enreg - ${stamp}.xlsx`.replace(/[\\/:*?"<>|]+/g,'-');a.click()}
@@ -548,6 +563,10 @@ $('fw').value=FW;$('fh').value=FH;fpv();
 $('fw').oninput=()=>{FW=+$('fw').value;try{localStorage.setItem('fw',FW)}catch(e){};fpv()};
 $('fh').oninput=()=>{FH=+$('fh').value;try{localStorage.setItem('fh',FH)}catch(e){};fpv()};
 $('keep').value=KEEP;$('keep').oninput=()=>{const v=parseInt($('keep').value);KEEP=isNaN(v)||v<0?0:Math.min(20,v);try{localStorage.setItem('keep',KEEP)}catch(e){}};
+function applyBtns(){$('bm').classList.toggle('hide',!SM);$('bs').classList.toggle('hide',!SM);$('bi').classList.toggle('hide',!SI)}
+$('showman').checked=SM;$('showimp').checked=SI;
+$('showman').onchange=()=>{SM=$('showman').checked;try{localStorage.setItem('showman',SM?'1':'0')}catch(e){};applyBtns()};
+$('showimp').onchange=()=>{SI=$('showimp').checked;try{localStorage.setItem('showimp',SI?'1':'0')}catch(e){};applyBtns()};applyBtns();
 $('tol').value=TOL;$('tol').oninput=()=>{const v=parseFloat($('tol').value);TOL=isNaN(v)||v<0?0:v;try{localStorage.setItem('tol',TOL)}catch(e){}};
 window.addEventListener('hashchange',route);window.addEventListener('resize',()=>{if(!$('pg1').classList.contains('hide'))exp()});
 decInfo();
