@@ -10,19 +10,21 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <style>
 :root{--bg:#faf7f4;--card:#fff;--tx:#241a14;--mu:#7a6a60;--ac:#5b3a29;--ok:#1b7f3b;--ko:#c0392b;--bd:#e3d9d1}
-@media(prefers-color-scheme:dark){:root{--bg:#171210;--card:#241c18;--tx:#f3ece6;--mu:#a89a90;--ac:#c8946f;--bd:#3a2f29}}
+@media(prefers-color-scheme:dark){:root{--bg:#171210;--card:#241c18;--tx:#f3ece6;--mu:#a89a90;--ac:#c8946f;--bd:#3a2f29;--ok:#4cd07a;--ko:#ff7b6b}}
 *{box-sizing:border-box}body{margin:0;font:16px system-ui,Arial;background:var(--bg);color:var(--tx);padding:12px;max-width:640px;margin:auto}
 .c{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:12px}
 h1{font-size:19px;margin:4px 0 12px}h2{font-size:15px;margin:0 0 8px;color:var(--ac)}
 label{display:block;font-size:13px;color:var(--mu);margin:8px 0 3px}
 input,select,textarea,button{font:inherit;width:100%;padding:10px;border-radius:8px;border:1px solid var(--bd);background:var(--bg);color:var(--tx)}
-button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}button.s{background:transparent;color:var(--ac);border:1px solid var(--ac)}
+button{background:var(--ac);color:#fff;border:2px solid var(--ac);border-radius:10px;font-weight:700;margin-top:8px;margin-bottom:4px;box-shadow:0 4px 0 rgba(0,0,0,.35);cursor:pointer}
+button:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.35)}
+button.s{background:var(--card);color:var(--ac);border:2px solid var(--ac);box-shadow:0 4px 0 var(--ac)}button.s:active{box-shadow:0 1px 0 var(--ac)}
 .r{display:flex;gap:8px}.r>*{flex:1}.m{font-size:13px;color:var(--mu)}.k{font-family:ui-monospace,monospace;white-space:pre-wrap}
-.res{font-size:22px;font-weight:700;padding:10px;border-radius:8px;text-align:center;color:#fff}.ok{background:var(--ok)}.ko{background:var(--ko)}
+.res{font-size:20px;font-weight:700;padding:6px 0;text-align:left}.ok{color:var(--ok)}.ko{color:var(--ko)}
 .h{display:flex;gap:8px;border-top:1px solid var(--bd);padding:8px 0;font-size:13px}.h img{width:48px;height:48px;object-fit:cover;border-radius:6px}
 .hide{display:none}
-.big{min-height:56px;font-size:18px;width:100%}.gr{background:#1b7f3b;min-height:56px;font-size:18px;margin-top:12px}.or{background:#e67e22;min-height:56px;font-size:16px;margin-top:12px}
-.bad{background:#c0392b;color:#fff;border-radius:10px;padding:12px;margin-top:12px;font-size:15px}.bad ul{margin:6px 0 0;padding-left:20px}.rd{color:var(--ko);border-color:var(--ko);min-height:48px}.wn{background:#e67e22}
+.big{min-height:56px;font-size:18px;width:100%}.gr{background:#1b7f3b;border-color:#1b7f3b;box-shadow:0 4px 0 #0f4d23;min-height:56px;font-size:18px;margin-top:12px}.gr:active{box-shadow:0 1px 0 #0f4d23}.or{background:#e67e22;border-color:#e67e22;box-shadow:0 4px 0 #9a560c;min-height:56px;font-size:16px;margin-top:12px}.or:active{box-shadow:0 1px 0 #9a560c}
+.bad{color:var(--ko);margin-top:14px;font-size:15px}.bad b{display:block;font-size:20px}.bad ul{margin:4px 0 0;padding-left:20px}button.rd{color:var(--ko);border-color:var(--ko);box-shadow:0 4px 0 var(--ko);min-height:48px}button.rd:active{box-shadow:0 1px 0 var(--ko)}.wn{color:#e67e22}
 .sr{border:1px solid var(--bd);border-radius:10px;padding:8px 10px;margin:6px 0}.sr summary{cursor:pointer;font-weight:600;font-size:14px}.sr .sx{margin:8px 0 4px;padding:8px}.sr summary .m{font-weight:400}
 .mb{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}.mb.hide{display:none}
 .md{background:var(--card);color:var(--tx);border-radius:14px;padding:18px;max-width:420px;width:100%}.md h3{margin:0 0 8px;font-size:17px;color:var(--ac)}.md p{margin:0 0 12px;font-size:15px;white-space:pre-line}
@@ -32,7 +34,7 @@ button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}b
 #cambox{flex:1;position:relative;overflow:hidden}#camv{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 #camf{position:absolute;border:3px solid #ffd400;box-shadow:0 0 0 9999px rgba(0,0,0,.5);border-radius:4px;pointer-events:none}
 #camt{color:#fff;text-align:center;font:13px system-ui,sans-serif;padding:6px;background:#111}
-#camb{padding:6px 10px calc(10px + env(safe-area-inset-bottom,0px));background:#111}#cam button.s{color:#fff;border-color:#fff}
+#camb{padding:6px 10px calc(10px + env(safe-area-inset-bottom,0px));background:#111}#cam button.s{background:#222;color:#fff;border-color:#fff;box-shadow:0 4px 0 rgba(255,255,255,.35)}
 .th{display:flex;align-items:center;gap:6px;margin:4px 0 12px}.th h1{flex:1;margin:0;font-size:15px;line-height:1.2}.tb{width:auto;margin:0;padding:8px 9px;font-size:12px}
 .ty{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;margin-top:8px}.ty b{font-size:15px}
 .pvb{background:#fff;color:#111;border:2px solid #111;border-radius:6px;padding:10px;margin-top:6px}
@@ -129,7 +131,7 @@ Ces deux fichiers vont ensemble (même dossier « rec/english » du dépôt). Ne
 <div id="camt">Placez le marquage dans le cadre jaune, de près et net</div>
 <div id="camb"><button id="cam1">📸 Prendre la photo</button><div class="r hide" id="cam2"><button id="camok">✅ Valider</button><button id="camre" class="s">↺ Reprendre</button></div>
 <div class="r"><button id="camto" class="s hide">🔦 Lampe</button><button id="camx" class="s">✖ Annuler</button></div></div></div>
-<div id="ft">© D@V · Version 1.2 · 07/11/2026</div>
+<div id="ft">© D@V · Version 1.3 · 07/11/2026</div>
 <div id="mb" class="mb hide"><div class="md"><h3 id="mt"></h3><p id="mm"></p><div class="r"><button id="mc" class="s hide"></button><button id="mo">OK</button></div></div></div>
 <script>
 const $=id=>document.getElementById(id);
@@ -484,7 +486,7 @@ const serieList=A=>{const m=new Map();for(const r of A)if(r.serie){if(!m.has(r.s
 let SER=[];
 async function hist(){const A=await all(),C=A.filter(r=>!r.serie).sort((a,b)=>a.ts<b.ts?1:-1);SER=serieList(A);
  $('hh').textContent=`Historique (${C.length} en cours)`;
- const it=r=>`<div class="h">${r.photo?`<img src="${r.photo}">`:'<div style="width:48px"></div>'}<div><b style="color:var(--${r.res==='OK'?'ok':'ko'})">${r.res}</b> ${r.prod} · ${r.lot}<br>${dfr(r.ts)} · ${r.op}<br><span class="m">${vl(r)?vl(r)+' · ':''}${r.mode}${r.why?' — '+r.why:''}</span></div></div>`;
+ const it=r=>`<div class="h">${r.photo?`<img src="${r.photo}">`:'<div style="width:48px"></div>'}<div><b style="color:${r.res!=='OK'?'var(--ko)':r.val==='manuelle'?'#e67e22':'var(--ok)'}">${r.res}</b> ${r.prod} · ${r.lot}<br>${dfr(r.ts)} · ${r.op}<br><span class="m">${vl(r)?vl(r)+' · ':''}${r.mode}${r.why?' — '+r.why:''}</span></div></div>`;
  let h=`<div class="m" style="margin:8px 0 4px"><b>En cours${C.length?' — '+[...new Set(C.map(r=>r.prod))].join(', '):''}</b></div>`+(C.slice(0,30).map(it).join('')||'<div class="m">Aucun enregistrement en cours</div>')+(C.length>30?`<div class="m">… et ${C.length-30} autre(s), inclus dans l'export</div>`:'');
  if(SER.length){h+=`<div class="m" style="margin:14px 0 4px"><b>Séries exportées (${SER.length} conservée${SER.length>1?'s':''} sur ${KEEP})</b></div>`;
   SER.forEach((s,i)=>{const lots=[...new Set(s.rs.map(r=>r.lot))].join(', '),ok=s.rs.filter(r=>r.res==='OK').length;
