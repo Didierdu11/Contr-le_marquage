@@ -23,7 +23,8 @@ button.s{background:var(--card);color:var(--ac);border:2px solid var(--ac);box-s
 .res{font-size:20px;font-weight:700;padding:6px 0;text-align:left}.ok{color:var(--ok)}.ko{color:var(--ko)}
 .h{display:flex;gap:8px;border-top:1px solid var(--bd);padding:8px 0;font-size:13px}.h img{width:48px;height:48px;object-fit:cover;border-radius:6px}
 .hide{display:none}
-.big{min-height:56px;font-size:18px;width:100%}.gr{background:#1b7f3b;border-color:#1b7f3b;box-shadow:0 4px 0 #0f4d23;min-height:56px;font-size:18px;margin-top:12px}.gr:active{box-shadow:0 1px 0 #0f4d23}.or{background:#e67e22;border-color:#e67e22;box-shadow:0 4px 0 #9a560c;min-height:56px;font-size:16px;margin-top:12px}.or:active{box-shadow:0 1px 0 #9a560c}
+.big{min-height:56px;font-size:18px;width:100%}
+#bp.big{min-height:112px;font-size:26px}.gr{background:#1b7f3b;border-color:#1b7f3b;box-shadow:0 4px 0 #0f4d23;min-height:56px;font-size:18px;margin-top:12px}.gr:active{box-shadow:0 1px 0 #0f4d23}.or{background:#e67e22;border-color:#e67e22;box-shadow:0 4px 0 #9a560c;min-height:56px;font-size:16px;margin-top:12px}.or:active{box-shadow:0 1px 0 #9a560c}
 .bad{color:var(--ko);margin-top:14px;font-size:15px}.bad b{display:block;font-size:20px}.bad ul{margin:4px 0 0;padding-left:20px}button.rd{color:var(--ko);border-color:var(--ko);box-shadow:0 4px 0 var(--ko);min-height:48px}button.rd:active{box-shadow:0 1px 0 var(--ko)}.wn{color:#e67e22}
 .sr{border:1px solid var(--bd);border-radius:10px;padding:8px 10px;margin:6px 0}.sr summary{cursor:pointer;font-weight:600;font-size:14px}.sr .sx{margin:8px 0 4px;padding:8px}.sr summary .m{font-weight:400}
 .mb{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}.mb.hide{display:none}
@@ -131,7 +132,7 @@ Ces deux fichiers vont ensemble (même dossier « rec/english » du dépôt). Ne
 <div id="camt">Placez le marquage dans le cadre jaune, de près et net</div>
 <div id="camb"><button id="cam1">📸 Prendre la photo</button><div class="r hide" id="cam2"><button id="camok">✅ Valider</button><button id="camre" class="s">↺ Reprendre</button></div>
 <div class="r"><button id="camto" class="s hide">🔦 Lampe</button><button id="camx" class="s">✖ Annuler</button></div></div></div>
-<div id="ft">© D@V · Version 1.3 · 07/11/2026</div>
+<div id="ft">© D@V · Version 1.4 · 07/11/2026</div>
 <div id="mb" class="mb hide"><div class="md"><h3 id="mt"></h3><p id="mm"></p><div class="r"><button id="mc" class="s hide"></button><button id="mo">OK</button></div></div></div>
 <script>
 const $=id=>document.getElementById(id);
@@ -477,7 +478,7 @@ async function saveScan(kind){if(!ok())return;const r=verdict();if(!r)return;con
  const rec={ts:new Date().toISOString(),op:$('op').value.trim(),prod:$('pr').value,type:t.name,lot:c.lot,date:c.date,txt:r.txt,res:kind==='rejete'?'NON OK':'OK',val:kind,auto:r.ok?'OK':'NON OK',why:r.ok?'':r.v.why.join(' ; '),mode,photo:cur.photo||'',exp:false};
  await put(rec);reset();
  const lab={auto:['ok','Enregistré — validé en auto'],manuelle:['wn','Enregistré — validé manuellement'],rejete:['ko','Enregistré — non conforme']}[kind];
- $('out').innerHTML=`<div class="res ${lab[0]}">${lab[1]}</div>`;await hist();$('pvw').scrollIntoView({block:'start'})}
+ $('out').innerHTML='';await hist();$('pvw').scrollIntoView({block:'start'})}
 
 /* Historique et export */
 const dfr=x=>new Date(x).toLocaleString('fr-FR'),p2s=n=>String(n).padStart(2,'0');
