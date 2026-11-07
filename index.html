@@ -21,6 +21,7 @@ button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}b
 .res{font-size:22px;font-weight:700;padding:10px;border-radius:8px;text-align:center;color:#fff}.ok{background:var(--ok)}.ko{background:var(--ko)}
 .h{display:flex;gap:8px;border-top:1px solid var(--bd);padding:8px 0;font-size:13px}.h img{width:48px;height:48px;object-fit:cover;border-radius:6px}
 .hide{display:none}
+.sr{border:1px solid var(--bd);border-radius:10px;padding:8px 10px;margin:6px 0}.sr summary{cursor:pointer;font-weight:600;font-size:14px}.sr .sx{margin:8px 0 4px;padding:8px}.sr summary .m{font-weight:400}
 .mb{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}.mb.hide{display:none}
 .md{background:var(--card);color:var(--tx);border-radius:14px;padding:18px;max-width:420px;width:100%}.md h3{margin:0 0 8px;font-size:17px;color:var(--ac)}.md p{margin:0 0 12px;font-size:15px;white-space:pre-line}
 #ft{text-align:center;font-size:12px;color:var(--mu);margin:18px 0 6px}
@@ -62,7 +63,7 @@ button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}b
 <div id="ov" class="hide"></div><div id="out" style="margin-top:10px"></div></div>
 
 <div class="c"><h2 id="hh">Historique (0)</h2>
-<div class="r"><button id="be" class="s">Exporter tout (Excel)</button><button id="bc" class="s">Exporter non exportés</button></div>
+<button id="be" class="s">Exporter les enregistrements en cours (Excel)</button>
 <div class="m" id="hmsg" style="margin:6px 0"></div><div id="hs"></div></div>
 </div>
 <div id="pg2" class="hide">
@@ -80,8 +81,8 @@ button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}b
 <select id="eng"><option value="auto">Automatique (PaddleOCR, sinon Tesseract)</option><option value="paddle">PaddleOCR seulement</option><option value="tess">Tesseract seulement</option></select>
 <button id="bpt" class="s">Tester PaddleOCR</button><div class="m" id="pst" style="margin-top:6px"></div>
 <div class="m" style="margin-top:6px">PaddleOCR demande 2 fichiers déposés à côté de index.html : <b>model.onnx</b> (7,8 Mo) et <b>dict.txt</b> (1,4 Ko). Liens et marche à suivre : voir la Notice.</div></div>
-<div class="c"><h2>Historique</h2><label style="display:flex;align-items:center;gap:10px;color:var(--tx);font-size:15px"><input type="checkbox" id="purge" style="width:22px;height:22px;flex:none" checked> Effacer de l'historique les enregistrements exportés</label>
-<div class="m" style="margin-top:6px">Après un export Excel réussi, les contrôles exportés (avec leurs photos) sont supprimés de l'application. Décochez pour les conserver. Cochée par défaut.</div></div>
+<div class="c"><h2>Historique</h2><label>Séries exportées conservées</label><input type="number" id="keep" min="0" max="20" step="1" value="3" inputmode="numeric">
+<div class="m" style="margin-top:6px">Quand vous changez de produit, les enregistrements du produit précédent sont exportés en Excel, puis rangés dans une série repliable. Seules les N dernières séries sont conservées (3 par défaut) : les plus anciennes sont supprimées avec leurs photos.</div></div>
 <div class="c"><h2>Contrôle de l'heure</h2><label>Tolérance (± minutes)</label><input type="number" id="tol" step="1" min="0" max="720" value="10" inputmode="numeric">
 <div class="m" style="margin-top:4px">Quand le type de marquage imprime une heure, elle est comparée à l'horloge de l'appareil avec cette tolérance. Valeur mémorisée.</div></div>
 </div>
@@ -101,7 +102,7 @@ button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:8px}b
 <li><b>Lecture automatique</b> : l'application fait plusieurs essais à des tailles différentes et retient le lot le plus souvent lu. Si l'heure reste incertaine (chiffres petits), un avertissement s'affiche : contrôlez-la sur la photo.</li>
 <li><b>Heure lue</b> : les 4 chiffres lus juste après le lot sont pris pour les heures et minutes, même s'ils sont lus O, o, Q, D ou U (comptés comme 0) ou I (compté comme 1) : « oo 52 » devient 00:52, « 04.01 » devient 04:01.</li>
 <li><b>Résultat</b> : OK ou NON OK avec la raison (date, lot, heure, texte).</li>
-<li><b>Historique et export</b> : chaque contrôle garde nom, heure, résultat, mode et photo. Au changement de produit, l'application propose d'exporter en Excel (avec photos) les contrôles du produit précédent. Boutons d'export : tout, ou seulement les non exportés. Dans les Paramètres, l'option « Effacer de l'historique les enregistrements exportés » (cochée par défaut) supprime de l'application les contrôles après un export réussi ; décochez-la pour les garder.</li></ol>
+<li><b>Séries et export</b> : tant que vous restez sur le même produit, ses enregistrements restent dans « En cours ». Quand vous <b>changez de produit</b>, l'application exporte automatiquement en Excel les enregistrements du produit précédent (un fichier : onglets Contrôles, Statistiques, Anomalies) puis les range dans une liste repliable « Séries exportées », repérée par produit et lot. Seules les 3 dernières séries sont conservées (réglable dans les Paramètres). Le bouton « Exporter les enregistrements en cours » fait une copie Excel sans changer l'historique ; « Exporter à nouveau » refait l'export d'une série.</li></ol>
 <p><b>Fichier Excel</b> : colonne « Texte modèle » avec les mots-clés {DATE}, {LOT}, {HEURE} et {*} (texte quelconque). Avec {*}, la comparaison d'image n'est pas possible.</p>
 <p><b>Installer PaddleOCR (lecture locale, gratuite) — 2 fichiers à déposer</b></p>
 <ol>
@@ -114,14 +115,14 @@ Ces deux fichiers vont ensemble (même dossier « rec/english » du dépôt). Ne
 <li><b>Vérifier</b> : ⚙️ Paramètres → « Tester PaddleOCR ». Message attendu : ✅ PaddleOCR prêt, avec le texte lu pour une phrase d'essai.</li></ol>
 <p>Le modèle lit des lignes recadrées : entourez bien le marquage. Solution de secours si ces liens changent : fichiers en_PP-OCRv3_rec_infer.onnx (huggingface.co/SWHL/RapidOCR, dossier PP-OCRv3) et en_dict.txt (dépôt PaddleOCR, ppocr/utils/en_dict.txt), à renommer en <b>model.onnx</b> et <b>dict.txt</b>.</p>
 <p><b>Installer l'application sur le téléphone</b> : ouvrez la page avec Chrome, menu ⋮ → « Installer l'application » (ou « Ajouter à l'écran d'accueil »). Sur iPhone : Safari → Partager → « Sur l'écran d'accueil ». L'icône « Contrôle marquage » apparaît ensuite avec les autres applications. Le produit choisi est mémorisé même après fermeture.</p>
-<p><b>Bon à savoir</b> : les données restent sur l'appareil, sans purge. Connexion internet requise à la première ouverture.</p></div>
+<p><b>Bon à savoir</b> : les données restent sur l'appareil (enregistrements en cours et dernières séries exportées). Connexion internet requise à la première ouverture.</p></div>
 </div>
 
 <div id="cam" class="hide"><div id="cambox"><video id="camv" playsinline muted autoplay></video><div id="camf"></div></div>
 <div id="camt">Placez le marquage dans le cadre jaune, de près et net</div>
 <div id="camb"><button id="cam1">📸 Prendre la photo</button><div class="r hide" id="cam2"><button id="camok">✅ Valider</button><button id="camre" class="s">↺ Reprendre</button></div>
 <div class="r"><button id="camto" class="s hide">🔦 Lampe</button><button id="camx" class="s">✖ Annuler</button></div></div></div>
-<div id="ft">© D@V · Version 1.0 · 06/11/2026</div>
+<div id="ft">© D@V · Version 1.1 · 07/11/2026</div>
 <div id="mb" class="mb hide"><div class="md"><h3 id="mt"></h3><p id="mm"></p><div class="r"><button id="mc" class="s hide"></button><button id="mo">OK</button></div></div></div>
 <script>
 const $=id=>document.getElementById(id);
@@ -130,7 +131,7 @@ function dlg(msg,title,ok,cancel){return new Promise(res=>{$('mt').textContent=t
 const info=(m,t)=>dlg(m,t||'Information'),ask=(m,t,o,c)=>dlg(m,t,o||'Oui',c||'Non');
 const MOIS=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 const p2=n=>String(n).padStart(2,'0');
-let DEC=0,TOL=10,ENG='auto',FW=80,FH=20,PURGE=true;try{PURGE=localStorage.getItem('purge')!=='0';FW=parseFloat(localStorage.getItem('fw'))||80;FH=parseFloat(localStorage.getItem('fh'))||20;ENG=localStorage.getItem('eng')||'auto';DEC=parseFloat(localStorage.getItem('dec2'))||0;const q=parseFloat(localStorage.getItem('tol'));if(!isNaN(q))TOL=q}catch(e){}
+let DEC=0,TOL=10,ENG='auto',FW=80,FH=20,KEEP=3;try{const kq=parseInt(localStorage.getItem('keep'));if(!isNaN(kq))KEEP=kq;FW=parseFloat(localStorage.getItem('fw'))||80;FH=parseFloat(localStorage.getItem('fh'))||20;ENG=localStorage.getItem('eng')||'auto';DEC=parseFloat(localStorage.getItem('dec2'))||0;const q=parseFloat(localStorage.getItem('tol'));if(!isNaN(q))TOL=q}catch(e){}
 let DB={types:{},prods:[]},cur={photo:null,mode:'Manuel'},prevProd='',idb;
 try{DB=JSON.parse(localStorage.getItem('db'))||DB}catch(e){}
 try{$('op').value=localStorage.getItem('op')||''}catch(e){}
@@ -176,7 +177,7 @@ function exp(){const t=typ();
  $('ty').textContent='Type : '+t.name;$('pvw').classList.remove('hide');renderPrev($('pv'),expText());
  $('pcap').textContent=t.tpl?'Aperçu de ce que le carton doit afficher maintenant (lot, date et heure calculés) :':'⚠ Texte modèle non renseigné dans Excel : aperçu minimal, seuls date et lot sont contrôlés.'}
 $('pr').onchange=async()=>{const n=$('pr').value;try{localStorage.setItem('prod',n)}catch(e){}
- if(prevProd&&n!==prevProd){const r=(await all()).filter(x=>x.prod===prevProd&&!x.exp);if(r.length&&await ask(`Vous changez de produit.\nExporter en Excel les ${r.length} contrôle(s) de « ${prevProd} » ?`,'Changement de produit','Exporter','Ne pas exporter'))await exportX(r,'changement_'+prevProd)}
+ if(prevProd&&n!==prevProd){const old=prevProd;prevProd=n;await closeSerie(old)}
  prevProd=n;exp();reset()};
 $('op').oninput=()=>{try{localStorage.setItem('op',$('op').value)}catch(e){}};
 function reset(){cur={photo:null,mode:'Manuel'};$('ov').className='hide';$('ed').classList.add('hide');$('cr').classList.add('hide');$('tx').value='';$('out').innerHTML='';$('ocr').textContent='';$('cmp').innerHTML=''}
@@ -462,26 +463,78 @@ $('bv').onclick=async()=>{if(!ok())return;const txt=$('tx').value;if(!txt.trim()
  hist();$('ed').classList.add('hide')};
 
 /* Historique et export */
-async function hist(){const A=await all(),a=[...A].reverse().slice(0,30);$('hh').textContent='Historique ('+A.length+')';
- $('hs').innerHTML=a.map(r=>`<div class="h">${r.photo?`<img src="${r.photo}">`:'<div style="width:48px"></div>'}<div><b style="color:var(--${r.res==='OK'?'ok':'ko'})">${r.res}</b> ${r.prod}<br>${new Date(r.ts).toLocaleString('fr-FR')} · ${r.op}<br><span class="m">${r.mode}${r.why?' — '+r.why:''}</span></div></div>`).join('')||'<div class="m">Aucun contrôle</div>'}
-async function exportX(rows,name){
- const prods=[...new Set(rows.map(r=>r.prod))],label=prods.length===1?prods[0]:'Plusieurs produits',n=rows.length,now=new Date();
+const dfr=x=>new Date(x).toLocaleString('fr-FR'),p2s=n=>String(n).padStart(2,'0');
+const hmin=m=>`${Math.floor(m/60)} h ${p2s(Math.round(m%60))} min`;
+const serieList=A=>{const m=new Map();for(const r of A)if(r.serie){if(!m.has(r.serie))m.set(r.serie,[]);m.get(r.serie).push(r)}return[...m.entries()].map(([id,rs])=>({id,rs:rs.sort((a,b)=>a.ts<b.ts?-1:1)})).sort((a,b)=>a.id<b.id?1:-1)};
+let SER=[];
+async function hist(){const A=await all(),C=A.filter(r=>!r.serie).sort((a,b)=>a.ts<b.ts?1:-1);SER=serieList(A);
+ $('hh').textContent=`Historique (${C.length} en cours)`;
+ const it=r=>`<div class="h">${r.photo?`<img src="${r.photo}">`:'<div style="width:48px"></div>'}<div><b style="color:var(--${r.res==='OK'?'ok':'ko'})">${r.res}</b> ${r.prod} · ${r.lot}<br>${dfr(r.ts)} · ${r.op}<br><span class="m">${r.mode}${r.why?' — '+r.why:''}</span></div></div>`;
+ let h=`<div class="m" style="margin:8px 0 4px"><b>En cours${C.length?' — '+[...new Set(C.map(r=>r.prod))].join(', '):''}</b></div>`+(C.slice(0,30).map(it).join('')||'<div class="m">Aucun enregistrement en cours</div>')+(C.length>30?`<div class="m">… et ${C.length-30} autre(s), inclus dans l'export</div>`:'');
+ if(SER.length){h+=`<div class="m" style="margin:14px 0 4px"><b>Séries exportées (${SER.length} conservée${SER.length>1?'s':''} sur ${KEEP})</b></div>`;
+  SER.forEach((s,i)=>{const lots=[...new Set(s.rs.map(r=>r.lot))].join(', '),ok=s.rs.filter(r=>r.res==='OK').length;
+   h+=`<details class="sr"><summary>${s.rs[0].prod} / lot ${lots}<br><span class="m">${s.rs.length} enreg. · ${ok} OK · ${s.rs.length-ok} NON OK · exportée le ${dfr(s.id.split('|')[0])}</span></summary><button class="s sx" data-i="${i}">Exporter à nouveau</button>${[...s.rs].reverse().map(it).join('')}</details>`})}
+ $('hs').innerHTML=h;
+ document.querySelectorAll('.sx').forEach(b=>b.onclick=async()=>{try{await exportX(SER[+b.dataset.i].rs)}catch(e){info("L'export Excel a échoué : "+e.message,'Export impossible')}})}
+async function prune(){const S=serieList(await all());for(const s of S.slice(KEEP))for(const r of s.rs)await del(r.id)}
+async function closeSerie(prod){const rs=(await all()).filter(r=>!r.serie&&r.prod===prod);if(!rs.length)return;
+ try{await exportX(rs)}catch(e){await info("L'export Excel a échoué ("+e.message+"). Les enregistrements de « "+prod+" » restent en cours.",'Export impossible');return}
+ const id=new Date().toISOString()+'|'+prod;for(const r of rs){r.serie=id;r.exp=true;await put(r)}
+ await prune();$('hmsg').textContent=`Série « ${prod} » exportée : ${rs.length} enregistrement${rs.length>1?'s':''}, rangée dans « Séries exportées ».`;await hist()}
+/* statistiques de la série */
+const reasonCat=w=>/Date attendue/.test(w)?'Date':/Lot attendu/.test(w)?'Lot':/Heure/.test(w)?'Heure':/texte/i.test(w)?'Texte différent du modèle':/Jugé non conforme/.test(w)?'Jugé non conforme (opérateur)':/Décision opérateur/.test(w)?'Décision différente du verdict auto':'Autre';
+function statsOf(rows){
+ const R=[...rows].sort((a,b)=>a.ts<b.ts?-1:1),n=R.length,T=R.map(r=>new Date(r.ts).getTime()),t0=T[0],t1=T[n-1],dur=(t1-t0)/6e4,slots=Math.floor(dur/15)+1;
+ const cov=new Array(slots).fill(0);T.forEach(t=>{cov[Math.min(slots-1,Math.floor((t-t0)/9e5))]++});
+ const gaps=[];for(let i=1;i<n;i++)gaps.push((T[i]-T[i-1])/6e4);
+ const tab=f=>{const m=new Map();R.forEach((r,i)=>{const k=f(r);if(!m.has(k))m.set(k,[]);m.get(k).push(i)});
+  return[...m.entries()].map(([k,ix])=>{const ok=ix.filter(i=>R[i].res==='OK').length;return[k,{n:ix.length,ok,ko:ix.length-ok,first:T[ix[0]],last:T[ix[ix.length-1]]}]}).sort((a,b)=>b[1].n-a[1].n)};
+ const ok=R.filter(r=>r.res==='OK').length,rs=new Map();
+ R.filter(r=>r.res!=='OK').forEach(r=>(r.why||'').split(' ; ').filter(Boolean).forEach(w=>{const c=reasonCat(w);rs.set(c,(rs.get(c)||0)+1)}));
+ const hours=new Array(24).fill(0);T.forEach(t=>hours[new Date(t).getHours()]++);
+ const empty=[];cov.forEach((c,k)=>{if(!c)empty.push(t0+k*9e5)});
+ return{n,t0,t1,dur,slots,covered:slots-empty.length,empty,ok,ko:n-ok,gapAvg:gaps.length?gaps.reduce((a,b)=>a+b,0)/gaps.length:0,gapMax:gaps.length?Math.max(...gaps):0,g15:gaps.filter(g=>g>15).length,g30:gaps.filter(g=>g>30).length,
+  byOp:tab(r=>r.op||'—'),byProd:tab(r=>r.prod||'—'),byLot:tab(r=>r.lot||'—'),byMode:tab(r=>(r.mode||'—').replace(/\s*\(.*\)$/,'')),reasons:[...rs.entries()].sort((a,b)=>b[1]-a[1]),hours}}
+const HDR={type:'pattern',pattern:'solid',fgColor:{argb:'FFEFE6DD'}};
+async function exportX(rows){
+ const R=[...rows].sort((a,b)=>a.ts<b.ts?-1:1),prods=[...new Set(R.map(r=>r.prod))],label=prods.length===1?prods[0]:'Plusieurs produits',n=R.length,now=new Date();
  const H=['Date/heure','Opérateur','Produit','Type','Lot attendu','Date attendue','Texte lu','Résultat','Raison','Mode','Photo'],Wd=[19,16,22,12,12,14,30,10,34,24,16];
- const wb=new ExcelJS.Workbook(),ws=wb.addWorksheet('Contrôles');ws.columns=Wd.map((width,i)=>({width,key:'c'+i}));
- ws.addRow(['Contrôle marquage — '+label]);ws.mergeCells(1,1,1,H.length);ws.getRow(1).font={bold:true,size:16};ws.getRow(1).height=28;
- ws.addRow([`${n} enregistrement${n>1?'s':''} · exporté le ${now.toLocaleString('fr-FR')}`]);ws.mergeCells(2,1,2,H.length);
- ws.addRow(H);ws.getRow(3).font={bold:true};
- rows.forEach((r,i)=>{const x=ws.addRow([new Date(r.ts).toLocaleString('fr-FR'),r.op,r.prod,r.type,r.lot,r.date,r.txt,r.res,r.why,r.mode,'']);
-  x.height=80;x.alignment={vertical:'top',wrapText:true};
-  if(r.photo){const id=wb.addImage({base64:r.photo,extension:'jpeg'});ws.addImage(id,{tl:{col:10,row:3+i},ext:{width:100,height:100}})}});
- const buf=await wb.xlsx.writeBuffer(),a=document.createElement('a'),stamp=`${now.getFullYear()}-${p2(now.getMonth()+1)}-${p2(now.getDate())} ${p2(now.getHours())}h${p2(now.getMinutes())}`;
+ const wb=new ExcelJS.Workbook(),img=new Map();R.forEach((r,i)=>{if(r.photo)img.set(i,wb.addImage({base64:r.photo,extension:'jpeg'}))});
+ const line=r=>[dfr(r.ts),r.op,r.prod,r.type,r.lot,r.date,r.txt,r.res,r.why,r.mode,''];
+ const head=(ws,title,sub)=>{ws.columns=Wd.map(width=>({width}));ws.addRow([title]);ws.mergeCells(1,1,1,H.length);ws.getRow(1).font={bold:true,size:16};ws.getRow(1).height=28;
+  ws.addRow([sub]);ws.mergeCells(2,1,2,H.length);const h=ws.addRow(H);h.font={bold:true};H.forEach((_,i)=>{h.getCell(i+1).fill=HDR})};
+ const fill=(ws,items)=>items.forEach(([r,i],k)=>{const x=ws.addRow(line(r));x.height=80;x.alignment={vertical:'top',wrapText:true};
+  if(r.res!=='OK')x.getCell(8).font={bold:true,color:{argb:'FFC0392B'}};if(img.has(i))ws.addImage(img.get(i),{tl:{col:10,row:3+k},ext:{width:100,height:100}})});
+ // 1. Contrôles
+ const w1=wb.addWorksheet('Contrôles');head(w1,'Contrôle marquage — '+label,`${n} enregistrement${n>1?'s':''} · exporté le ${dfr(now)}`);fill(w1,R.map((r,i)=>[r,i]));w1.views=[{state:'frozen',ySplit:3}];
+ // 2. Statistiques
+ const S=statsOf(R),w2=wb.addWorksheet('Statistiques');w2.columns=[{width:40},{width:18},{width:14},{width:14},{width:16},{width:22},{width:22}];
+ const kv=(a,b,f)=>{const x=w2.addRow([a,b]);x.getCell(1).font={bold:true};if(f)x.getCell(2).numFmt=f;x.getCell(2).alignment={horizontal:'left'}};
+ const tit=t=>{w2.addRow([]);const x=w2.addRow([t]);x.font={bold:true,size:12,color:{argb:'FF5B3A29'}}};
+ const tb=(t,cols,rowsT)=>{tit(t);const h=w2.addRow(cols);h.font={bold:true};cols.forEach((_,i)=>{h.getCell(i+1).fill=HDR});rowsT.forEach(r=>w2.addRow(r))};
+ w2.addRow(['Statistiques — '+label]);w2.getRow(1).font={bold:true,size:16};w2.getRow(1).height=28;
+ tit('Période');kv('Début (premier enregistrement)',dfr(S.t0));kv('Fin (dernier enregistrement)',dfr(S.t1));kv('Durée',hmin(S.dur));
+ tit('Réalisation (1 enregistrement tous les quarts d\'heure)');kv('Enregistrements réalisés',S.n);kv('Enregistrements prévus (durée ÷ 15 min + 1)',S.slots);kv('Écart réalisé − prévu',S.n-S.slots);
+ kv('Concordance réalisé / prévu',S.n/S.slots,'0.0%');kv('Créneaux de 15 min couverts',`${S.covered} / ${S.slots}`);kv('Taux de créneaux couverts',S.covered/S.slots,'0.0%');kv('Créneaux de 15 min sans contrôle',S.empty.length);
+ kv('Intervalle moyen entre contrôles (min)',Math.round(S.gapAvg*10)/10);kv('Intervalle le plus long (min)',Math.round(S.gapMax*10)/10);kv('Intervalles supérieurs à 15 min',S.g15);kv('Intervalles supérieurs à 30 min',S.g30);
+ tit('Résultats');kv('Conformes (OK)',S.ok);kv('Non conformes (NON OK)',S.ko);kv('Taux de conformité',S.ok/S.n,'0.0%');
+ const ft=m=>dfr(m),row=([k,v])=>[k,v.n,v.ok,v.ko,v.ok/v.n,ft(v.first),ft(v.last)];
+ tb('Par opérateur',['Opérateur','Enregistrements','OK','NON OK','Conformité','Premier','Dernier'],S.byOp.map(row));
+ if(S.byProd.length>1)tb('Par produit',['Produit','Enregistrements','OK','NON OK','Conformité','Premier','Dernier'],S.byProd.map(row));
+ tb('Par lot',['Lot','Enregistrements','OK','NON OK','Conformité','Premier','Dernier'],S.byLot.map(row));
+ tb('Par mode de lecture',['Mode','Enregistrements','OK','NON OK','Conformité','Premier','Dernier'],S.byMode.map(row));
+ tb('Anomalies par motif',['Motif','Occurrences'],S.reasons.length?S.reasons:[['Aucune anomalie',0]]);
+ tb('Répartition par heure de la journée',['Heure','Enregistrements'],S.hours.map((c,h)=>[`${p2s(h)}h`,c]).filter(x=>x[1]>0));
+ tb('Créneaux de 15 min sans contrôle'+(S.empty.length>150?' (150 premiers)':''),['Début du créneau'],S.empty.length?S.empty.slice(0,150).map(t=>[dfr(t)]):[['Aucun : tous les créneaux sont couverts']]);
+ w2.eachRow(r=>{[5].forEach(c=>{const v=r.getCell(c).value;if(typeof v==='number'&&v<=1&&r.getCell(2).value>0)r.getCell(c).numFmt='0.0%'})});
+ // 3. Anomalies
+ const bad=R.map((r,i)=>[r,i]).filter(x=>x[0].res!=='OK'),w3=wb.addWorksheet('Anomalies');
+ head(w3,'Anomalies — '+label,bad.length?`${bad.length} enregistrement${bad.length>1?'s':''} non conforme${bad.length>1?'s':''} sur ${n}`:`Aucune anomalie sur ${n} enregistrements`);fill(w3,bad);w3.views=[{state:'frozen',ySplit:3}];
+ const buf=await wb.xlsx.writeBuffer(),a=document.createElement('a'),stamp=`${now.getFullYear()}-${p2s(now.getMonth()+1)}-${p2s(now.getDate())} ${p2s(now.getHours())}h${p2s(now.getMinutes())}`;
  a.href=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
- a.download=`Contrôle marquage - ${label} - ${n} enreg - ${stamp}.xlsx`.replace(/[\\/:*?"<>|]+/g,'-');a.click();
- if(PURGE){for(const r of rows)await del(r.id);$('hmsg').textContent=`${rows.length} contrôle(s) exporté(s) et effacé(s) de l'historique.`}
- else{for(const r of rows){r.exp=true;await put(r)}$('hmsg').textContent=`${rows.length} contrôle(s) exporté(s) (conservés dans l'historique).`}
- hist()}
-$('be').onclick=async()=>{const r=await all();if(r.length)exportX(r,'tout');else info('Il n\'y a aucun contrôle à exporter.','Export')};
-$('bc').onclick=async()=>{const r=(await all()).filter(x=>!x.exp);if(r.length)exportX(r,'nouveaux');else info('Tous les contrôles ont déjà été exportés.','Export')};
+ a.download=`Contrôle marquage - ${label} - ${n} enreg - ${stamp}.xlsx`.replace(/[\\/:*?"<>|]+/g,'-');a.click()}
+$('be').onclick=async()=>{const r=(await all()).filter(x=>!x.serie);if(!r.length)return void info("Il n'y a aucun enregistrement en cours à exporter.",'Export');
+ try{await exportX(r);$('hmsg').textContent=`${r.length} enregistrement(s) en cours exporté(s). Ils restent dans l'historique jusqu'au changement de produit.`}catch(e){info("L'export Excel a échoué : "+e.message,'Export impossible')}};
 const hh=m=>p2(Math.floor(m/60))+':'+p2(m%60);
 function decInfo(){$('decm').textContent='Le n° du jour du lot change à '+hh(Math.round(((DEC*60)%1440+1440)%1440))+'.'}
 function route(){const h=location.hash;$('pg1').classList.toggle('hide',h==='#parametres'||h==='#notice');$('pg2').classList.toggle('hide',h!=='#parametres');$('pg3').classList.toggle('hide',h!=='#notice');window.scrollTo(0,0);if(h!=='#parametres'&&h!=='#notice')exp()}
@@ -494,7 +547,7 @@ function fpv(){$('vfw').textContent=FW+' %';$('vfh').textContent=FH+' %';$('fpf'
 $('fw').value=FW;$('fh').value=FH;fpv();
 $('fw').oninput=()=>{FW=+$('fw').value;try{localStorage.setItem('fw',FW)}catch(e){};fpv()};
 $('fh').oninput=()=>{FH=+$('fh').value;try{localStorage.setItem('fh',FH)}catch(e){};fpv()};
-$('purge').checked=PURGE;$('purge').onchange=()=>{PURGE=$('purge').checked;try{localStorage.setItem('purge',PURGE?'1':'0')}catch(e){}};
+$('keep').value=KEEP;$('keep').oninput=()=>{const v=parseInt($('keep').value);KEEP=isNaN(v)||v<0?0:Math.min(20,v);try{localStorage.setItem('keep',KEEP)}catch(e){}};
 $('tol').value=TOL;$('tol').oninput=()=>{const v=parseFloat($('tol').value);TOL=isNaN(v)||v<0?0:v;try{localStorage.setItem('tol',TOL)}catch(e){}};
 window.addEventListener('hashchange',route);window.addEventListener('resize',()=>{if(!$('pg1').classList.contains('hide'))exp()});
 decInfo();
