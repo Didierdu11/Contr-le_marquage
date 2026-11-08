@@ -23,8 +23,13 @@ button.s{background:var(--card);color:var(--ac);border:2px solid var(--ac);box-s
 .res{font-size:20px;font-weight:700;padding:6px 0;text-align:left}.ok{color:var(--ok)}.ko{color:var(--ko)}
 .h{display:flex;gap:8px;border-top:1px solid var(--bd);padding:8px 0;font-size:13px}.h img{width:48px;height:48px;object-fit:cover;border-radius:6px}
 .hide{display:none}
+#ban{position:sticky;top:0;z-index:60;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px 12px;margin:0 0 10px;font-size:14px;font-weight:600;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+#ban .bk{color:var(--ok)}#ban .bn{color:var(--ko)}#ban .bp{color:var(--ac)}
+.sb{position:relative;overflow:hidden;border-radius:8px;border:1px solid var(--bd);margin-top:8px}.sb img{width:100%;display:block}
+.sbar{position:absolute;top:0;bottom:0;width:45%;left:-45%;background:linear-gradient(90deg,rgba(255,212,0,0),rgba(255,212,0,.85) 50%,rgba(255,212,0,0))}
+@keyframes sw{0%{left:-28%}100%{left:100%}}
 .big{min-height:56px;font-size:18px;width:100%}
-#bp.big{min-height:112px;font-size:26px}.gr{background:#1b7f3b;border-color:#1b7f3b;box-shadow:0 4px 0 #0f4d23;min-height:56px;font-size:18px;margin-top:12px}.gr:active{box-shadow:0 1px 0 #0f4d23}.or{background:#e67e22;border-color:#e67e22;box-shadow:0 4px 0 #9a560c;min-height:56px;font-size:16px;margin-top:12px}.or:active{box-shadow:0 1px 0 #9a560c}
+#bp.big{min-height:112px;font-size:26px}.gr{background:#1b7f3b;border-color:#1b7f3b;box-shadow:0 4px 0 #0f4d23;min-height:56px;font-size:18px;margin-top:12px}.gr:active{box-shadow:0 1px 0 #0f4d23}.or{background:#fff;color:#e67e22;border:2px solid #e67e22;box-shadow:0 4px 0 #9a560c;min-height:56px;font-size:16px;margin-top:12px}.or:active{box-shadow:0 1px 0 #9a560c}
 .bad{color:var(--ko);margin-top:14px;font-size:15px}.bad b{display:block;font-size:20px}.bad ul{margin:4px 0 0;padding-left:20px}button.rd{color:var(--ko);border-color:var(--ko);box-shadow:0 4px 0 var(--ko);min-height:48px}button.rd:active{box-shadow:0 1px 0 var(--ko)}.wn{color:#e67e22}
 .sr{border:1px solid var(--bd);border-radius:10px;padding:8px 10px;margin:6px 0}.sr summary{cursor:pointer;font-weight:600;font-size:14px}.sr .sx{margin:8px 0 4px;padding:8px}.sr summary .m{font-weight:400}
 .mb{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}.mb.hide{display:none}
@@ -37,7 +42,7 @@ button.s{background:var(--card);color:var(--ac);border:2px solid var(--ac);box-s
 #camt{color:#fff;text-align:center;font:13px system-ui,sans-serif;padding:6px;background:#111}
 #camb{padding:6px 10px calc(10px + env(safe-area-inset-bottom,0px));background:#111}#cam button.s{background:#222;color:#fff;border-color:#fff;box-shadow:0 4px 0 rgba(255,255,255,.35)}
 .th{display:flex;align-items:center;gap:6px;margin:4px 0 12px}.th h1{flex:1;margin:0;font-size:15px;line-height:1.2}.tb{width:auto;margin:0;padding:8px 9px;font-size:12px}
-.ty{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;margin-top:8px}.ty b{font-size:15px}
+.ty{display:flex;flex-wrap:nowrap;gap:12px;align-items:baseline;margin-top:8px;min-width:0}.ty b{font-size:15px;white-space:nowrap}.ty #sum{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .pvb{background:#fff;color:#111;border:2px solid #111;border-radius:6px;padding:10px;margin-top:6px}
 .pl{display:flex;align-items:baseline;gap:6px}.ln{flex:none;width:26px;font:600 11px system-ui,sans-serif;color:#888}
 .tx{font-family:'Courier New',Courier,ui-monospace,monospace;font-weight:700;white-space:pre;font-feature-settings:'zero';font-variant-ligatures:none;line-height:1.25}
@@ -46,11 +51,11 @@ button.s{background:var(--card);color:var(--ac);border:2px solid var(--ac);box-s
 </style></head><body>
 <div id="pg1">
 <div class="th"><h1>Contrôle marquage carton</h1><button id="bpa" class="s tb">⚙️ Paramètres</button><button id="bno" class="s tb">📖 Notice</button></div>
+<div id="ban" class="hide"></div>
 
 
 <div class="c"><h2>1. Opérateur et produit</h2>
-<label>Nom de l'opérateur</label><input id="op" autocomplete="name">
-<label>Produit</label><select id="pr"><option value="">— choisir —</option></select>
+<div class="r" style="align-items:flex-end"><div style="flex:1"><label>Nom de l'opérateur</label><input id="op" autocomplete="name"></div><div style="flex:1.4"><label>Produit</label><select id="pr"><option value="">— choisir —</option></select></div></div>
 <div class="ty"><b id="ty"></b><span class="m" id="sum"></span></div></div>
 
 <div class="c" id="ctl"><h2>2. Contrôle</h2>
@@ -61,6 +66,7 @@ button.s{background:var(--card);color:var(--ac);border:2px solid var(--ac);box-s
 <div class="m" style="margin-top:6px">Astuce : photographiez de près, avec des caractères bien grands et nets.</div>
 <input type="file" id="ph" accept="image/*" capture="environment" class="hide"><input type="file" id="ph2" accept="image/*" class="hide">
 <div id="ocr" class="m"></div>
+<div id="scan" class="hide"><div class="m" style="margin-bottom:4px">Lecture en cours…</div><div class="sb"><img id="scani" alt=""><div class="sbar"></div></div></div>
 <div id="cr" class="hide"><div class="m" style="margin:8px 0 4px">Entourez du doigt la zone du marquage (sans le décor)</div>
 <canvas id="cv" style="max-width:100%;max-height:56vh;margin:0 auto;touch-action:none;border-radius:8px;display:block"></canvas>
 <div style="position:sticky;bottom:0;background:var(--card);padding:6px 0;z-index:5"><div class="r"><button id="bo">🔍 Lire la zone</button><button id="bs" class="s">Saisir à la main</button></div><button id="bk" class="s">🧪 Comparer à l'image attendue (sans lecture)</button></div></div>
@@ -111,7 +117,7 @@ button.s{background:var(--card);color:var(--ac);border:2px solid var(--ac);box-s
 <li><b>Saisie manuelle</b> (bouton à activer dans les Paramètres) : recopiez le texte du marquage ; la vérification et les boutons de validation s'affichent comme pour un scan.</li>
 <li><b>Lecture automatique</b> : l'application fait plusieurs essais à des tailles différentes et retient le lot le plus souvent lu. Si l'heure reste incertaine (chiffres petits), un avertissement s'affiche : contrôlez-la sur la photo.</li>
 <li><b>Heure lue</b> : les 4 chiffres lus juste après le lot sont pris pour les heures et minutes, même s'ils sont lus O, o, Q, D ou U (comptés comme 0) ou I (compté comme 1) : « oo 52 » devient 00:52, « 04.01 » devient 04:01.</li>
-<li><b>Résultat</b> : sous les 3 zones (① attendu, ② zone encadrée, ③ lu), un bouton vert <b>« ✅ Scan conforme »</b> apparaît si tout correspond : il enregistre le contrôle « validé en auto ». Sinon le message rouge <b>« Scan non conforme »</b> donne la raison, avec le bouton orange <b>« Vérifier visuellement le bon numéro de lot pour validation »</b> : après avoir regardé le carton, il enregistre le contrôle « validé manuellement » (repris dans l'onglet Anomalies de l'export). Le bouton « Enregistrer comme non conforme » enregistre un carton réellement erroné. Corriger le texte ③ relance la vérification.</li>
+<li><b>Résultat</b> : sous les 3 zones (① attendu, ② zone encadrée, ③ lu), un bouton vert <b>« ✅ Scan conforme »</b> apparaît si tout correspond : il enregistre le contrôle « validé en auto ». Sinon le message rouge <b>« Scan non conforme »</b> donne la raison, avec le bouton orange <b>« Valider après confirmation visuelle »</b> : après avoir regardé le carton, il enregistre le contrôle « validé manuellement » (repris dans l'onglet Anomalies de l'export). Le bouton « Enregistrer comme non conforme » enregistre un carton réellement erroné. Corriger le texte ③ relance la vérification.</li>
 <li><b>Séries et export</b> : tant que vous restez sur le même produit, ses enregistrements restent dans « En cours ». Quand vous <b>changez de produit</b>, l'application exporte automatiquement en Excel les enregistrements du produit précédent (un fichier : onglets Contrôles, Statistiques, Anomalies) puis les range dans une liste repliable « Séries exportées », repérée par produit et lot. Seules les 3 dernières séries sont conservées (réglable dans les Paramètres). Le bouton « Exporter les enregistrements en cours » fait une copie Excel sans changer l'historique ; « Exporter à nouveau » refait l'export d'une série.</li></ol>
 <p><b>Fichier Excel</b> : colonne « Texte modèle » avec les mots-clés {DATE}, {LOT}, {HEURE} et {*} (texte quelconque). Avec {*}, la comparaison d'image n'est pas possible.</p>
 <p><b>Installer PaddleOCR (lecture locale, gratuite) — 2 fichiers à déposer</b></p>
@@ -132,7 +138,7 @@ Ces deux fichiers vont ensemble (même dossier « rec/english » du dépôt). Ne
 <div id="camt">Placez le marquage dans le cadre jaune, de près et net</div>
 <div id="camb"><button id="cam1">📸 Prendre la photo</button><div class="r hide" id="cam2"><button id="camok">✅ Valider</button><button id="camre" class="s">↺ Reprendre</button></div>
 <div class="r"><button id="camto" class="s hide">🔦 Lampe</button><button id="camx" class="s">✖ Annuler</button></div></div></div>
-<div id="ft">© D@V · Version 1.6 · 07/11/2026</div>
+<div id="ft">© D@V · Version 1.9 · 07/11/2026</div>
 <div id="mb" class="mb hide"><div class="md"><h3 id="mt"></h3><p id="mm"></p><div class="r"><button id="mc" class="s hide"></button><button id="mo">OK</button></div></div></div>
 <script>
 const $=id=>document.getElementById(id);
@@ -186,7 +192,7 @@ function exp(){const t=typ();
  if(t.dur===undefined&&!t.tpl&&!t.fmt){$('ty').textContent=`Type « ${t.name} » introuvable dans le fichier`;$('pvw').classList.add('hide');return}
  $('ty').textContent='Type : '+t.name;$('pvw').classList.remove('hide');renderPrev($('pv'),expText());
  $('pcap').textContent=t.tpl?'Aperçu de ce que le carton doit afficher maintenant (lot, date et heure calculés) :':'⚠ Texte modèle non renseigné dans Excel : aperçu minimal, seuls date et lot sont contrôlés.'}
-$('pr').onchange=async()=>{const n=$('pr').value;try{localStorage.setItem('prod',n)}catch(e){}
+$('pr').onchange=async()=>{const n=$('pr').value;try{localStorage.setItem('prod',n)}catch(e){}setTimeout(()=>hist(),0);
  if(prevProd&&n!==prevProd){const old=prevProd;prevProd=n;await closeSerie(old)}
  prevProd=n;exp();reset()};
 $('op').oninput=()=>{try{localStorage.setItem('op',$('op').value)}catch(e){}};
@@ -315,12 +321,19 @@ async function readTess(say){const res=[],V=[[false,true,1],[false,true,2],[fals
 async function testPaddle(){const o=$('pst');o.textContent='Chargement du moteur…';
  try{const t0=performance.now(),r=await paddleRec(testCanvas());o.textContent=`✅ PaddleOCR prêt (${PS.name}, disposition ${PS.layout.name}, calibrage ${PS.cal} %). Test : « ${r.text} » en ${Math.round(performance.now()-t0)} ms. Détail : ${PS.info}. Attendu : N° de lot : 6308R 22:35 (le ° peut manquer).`}
  catch(e){o.textContent='❌ '+e.message}}
-$('bo').onclick=async()=>{$('bo').disabled=true;const say=m=>$('ocr').textContent=m;say('Lecture en cours (la première fois, le téléchargement des moteurs peut prendre un moment)…');
+/* balayage : la bande avance pendant chaque passe de lecture et atteint la fin quand la lecture est terminée */
+let SC=null;
+function scanPos(f){const b=document.querySelector('.sbar');if(b)b.style.left=(-45+Math.max(0,Math.min(1,f))*145)+'%'}
+function scanLoop(){if(!SC)return;const el=performance.now()-SC.t0,f=(SC.k+Math.min(.95,el/SC.est))/SC.N;scanPos(f);SC.raf=requestAnimationFrame(scanLoop)}
+function scanStart(){$('cr').classList.add('hide');$('scani').src=cropURL();$('scan').classList.remove('hide');if(SC)cancelAnimationFrame(SC.raf);SC={k:0,N:3,t0:performance.now(),est:2500,durs:[],raf:0};scanPos(0);SC.raf=requestAnimationFrame(scanLoop)}
+function scanStage(i,N){if(!SC)return;if(N)SC.N=N;const now=performance.now(),k=i-1;if(k!==SC.k){SC.durs.push(now-SC.t0);SC.est=SC.durs.reduce((a,b)=>a+b,0)/SC.durs.length;SC.k=k;SC.t0=now}}
+function scanStop(){if(SC){cancelAnimationFrame(SC.raf);SC=null;scanPos(1)}setTimeout(()=>$('scan').classList.add('hide'),400)}
+$('bo').onclick=async()=>{$('bo').disabled=true;scanStart();const say=m=>{$('ocr').textContent=m;const q=m.match(/essai (\d+)\/(\d+)/);if(q)scanStage(+q[1],+q[2])};say('Lecture en cours (la première fois, le téléchargement des moteurs peut prendre un moment)…');
  let res=[],used='',why='';
  if(ENG!=='tess'){try{res=await readPaddle(say);used='PaddleOCR'}catch(e){why=e.message}}
  if(!res.length&&ENG!=='paddle'){try{res=await readTess(say);used='Tesseract'}catch(e){worker=null;why=why||e.message}}
  let best={text:'',conf:-1};for(const r of res)if(r.conf>best.conf)best=r;
- $('bo').disabled=false;$('cr').classList.add('hide');$('ed').classList.remove('hide');
+ $('bo').disabled=false;scanStop();$('cr').classList.add('hide');$('ed').classList.remove('hide');
  if(best.conf<0){cur.mode='Manuel (lecture photo échouée)';$('ocr').textContent="⚠ Lecture impossible"+(why?' ('+why+')':'')+" : saisissez le texte à la main (ce sera noté dans l'historique).";$('tx').value=''}
  else{let txt=best.text,info=[used+(ENG==='auto'&&used==='Tesseract'&&why?' (PaddleOCR indisponible : '+why+')':'')];const v=vote(res),n=res.length,ty=typ();
   if(v.lot){const re=/[A-Z]?\d{4} ?R/i;if(re.test(txt))txt=txt.replace(re,v.lot[0]);info.push(`lot ${v.lot[0]} lu ${v.lot[1]}/${n} fois`)}
@@ -328,7 +341,7 @@ $('bo').onclick=async()=>{$('bo').disabled=true;const say=m=>$('ocr').textConten
    if(v.time&&v.time[1]/n>=.5){txt=setTime(txt,v.time[0]);info.push(`heure ${v.time[0]} lue ${v.time[1]}/${n} fois`)}
    else{if(own)txt=setTime(txt,own);info.push("⚠ heure incertaine : vérifiez les chiffres sur la photo")}}
   cur.mode='Photo';cur.ocr=txt;$('ocr').textContent=`Lecture terminée (${info.join(' · ')}). Vérifiez et corrigez si besoin.`;$('tx').value=txt}
- fillCmp(cropURL(),'Zone encadrée');showVerdict();$('cmp').scrollIntoView({behavior:'smooth',block:'start'})};
+ fillCmp(cropURL(),'Zone encadrée');showVerdict();$('ctl').scrollIntoView({behavior:'smooth',block:'start'})};
 
 const mc=document.createElement('canvas').getContext('2d');
 function renderPrev(box,text){box.className='pvb';box.textContent='';
@@ -470,7 +483,7 @@ function showVerdict(){const o=$('vd');o.innerHTML='';const r=verdict();if(!r)re
  const mk=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt)e.textContent=txt;return e};
  if(r.ok){const b=mk('button','gr','✅ Scan conforme');b.onclick=()=>saveScan('auto');o.append(b);return}
  const bad=mk('div','bad');bad.append(mk('b','','Scan non conforme'));const ul=mk('ul','');r.v.why.forEach(w=>ul.append(mk('li','',w)));bad.append(ul);
- const bm=mk('button','or','Vérifier visuellement le bon numéro de lot pour validation');bm.onclick=()=>saveScan('manuelle');
+ const bm=mk('button','or','Valider après confirmation visuelle');bm.onclick=()=>saveScan('manuelle');
  const bk=mk('button','s rd','Enregistrer comme non conforme');bk.onclick=()=>saveScan('rejete');o.append(bad,bm,bk)}
 $('tx').oninput=showVerdict;
 async function saveScan(kind){if(!ok())return;const r=verdict();if(!r)return;const t=typ(),c=calc(t);let mode=cur.mode;
@@ -478,14 +491,17 @@ async function saveScan(kind){if(!ok())return;const r=verdict();if(!r)return;con
  const rec={ts:new Date().toISOString(),op:$('op').value.trim(),prod:$('pr').value,type:t.name,lot:c.lot,date:c.date,txt:r.txt,res:kind==='rejete'?'NON OK':'OK',val:kind,auto:r.ok?'OK':'NON OK',why:r.ok?'':r.v.why.join(' ; '),mode,photo:cur.photo||'',exp:false};
  await put(rec);reset();
  const lab={auto:['ok','Enregistré — validé en auto'],manuelle:['wn','Enregistré — validé manuellement'],rejete:['ko','Enregistré — non conforme']}[kind];
- $('out').innerHTML='';await hist();$('pvw').scrollIntoView({block:'start'})}
+ $('out').innerHTML='';await hist();$('ctl').scrollIntoView({block:'start'})}
 
 /* Historique et export */
 const dfr=x=>new Date(x).toLocaleString('fr-FR'),p2s=n=>String(n).padStart(2,'0');
 const hmin=m=>`${Math.floor(m/60)} h ${p2s(Math.round(m%60))} min`;
 const serieList=A=>{const m=new Map();for(const r of A)if(r.serie){if(!m.has(r.serie))m.set(r.serie,[]);m.get(r.serie).push(r)}return[...m.entries()].map(([id,rs])=>({id,rs:rs.sort((a,b)=>a.ts<b.ts?-1:1)})).sort((a,b)=>a.id<b.id?1:-1)};
 let SER=[];
-async function hist(){const A=await all(),C=A.filter(r=>!r.serie).sort((a,b)=>a.ts<b.ts?1:-1);SER=serieList(A);
+function banner(C){const b=$('ban'),P=$('pr').value,L=P?C.filter(r=>r.prod===P):C,n=L.length,ko=L.filter(r=>r.res!=='OK').length,man=L.filter(r=>r.val==='manuelle').length,
+ pc=n?Math.round((n-ko)/n*100):0,pm=n?Math.round(man/n*100):0;
+ b.className='';b.innerHTML=`<div style="font-size:15px;color:var(--tx)">${P||'Aucun produit sélectionné'}</div><div style="margin-top:3px">${n} contrôle${n>1?'s':''} · <span class="${!n?'bp':pc>=95?'bk':pc>=80?'bp':'bn'}">${n?pc+' %':'—'} conforme</span> · dont <span class="bp">${n?pm+' %':'—'} validé manuellement</span></div>`}
+async function hist(){const A=await all(),C=A.filter(r=>!r.serie).sort((a,b)=>a.ts<b.ts?1:-1);SER=serieList(A);banner(C);
  $('hh').textContent=`Historique (${C.length} en cours)`;
  const it=r=>`<div class="h">${r.photo?`<img src="${r.photo}">`:'<div style="width:48px"></div>'}<div><b style="color:${r.res!=='OK'?'var(--ko)':r.val==='manuelle'?'#e67e22':'var(--ok)'}">${r.res}</b> ${r.prod} · ${r.lot}<br>${dfr(r.ts)} · ${r.op}<br><span class="m">${vl(r)?vl(r)+' · ':''}${r.mode}${r.why?' — '+r.why:''}</span></div></div>`;
  let h=`<div class="m" style="margin:8px 0 4px"><b>En cours${C.length?' — '+[...new Set(C.map(r=>r.prod))].join(', '):''}</b></div>`+(C.slice(0,30).map(it).join('')||'<div class="m">Aucun enregistrement en cours</div>')+(C.length>30?`<div class="m">… et ${C.length-30} autre(s), inclus dans l'export</div>`:'');

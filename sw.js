@@ -1,4 +1,4 @@
-const C='marquage-v9',CORE=['./','index.html','manifest.json','icon-192.png','icon-512.png','favicon.png'];
+const C='marquage-v12',CORE=['./','index.html','manifest.json','icon-192.png','icon-512.png','favicon.png'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>Promise.all(CORE.map(u=>c.add(u).catch(()=>{})))))});
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))).then(()=>clients.claim())));
 self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;
