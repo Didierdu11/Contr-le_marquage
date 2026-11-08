@@ -42,7 +42,7 @@ button.s{background:var(--card);color:var(--ac);border:2px solid var(--ac);box-s
 #camt{color:#fff;text-align:center;font:13px system-ui,sans-serif;padding:6px;background:#111}
 #camb{padding:6px 10px calc(10px + env(safe-area-inset-bottom,0px));background:#111}#cam button.s{background:#222;color:#fff;border-color:#fff;box-shadow:0 4px 0 rgba(255,255,255,.35)}
 .th{display:flex;align-items:center;gap:6px;margin:4px 0 12px}.th h1{flex:1;margin:0;font-size:15px;line-height:1.2}.tb{width:auto;margin:0;padding:8px 9px;font-size:12px}
-.ty{display:flex;flex-wrap:nowrap;gap:12px;align-items:baseline;margin-top:8px;min-width:0}.ty b{font-size:15px;white-space:nowrap}.ty #sum{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.ty{display:flex;flex-wrap:nowrap;margin-top:8px;min-width:0}.ty #sum{flex:1;font-size:clamp(9px,2.6vw,11px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .pvb{background:#fff;color:#111;border:2px solid #111;border-radius:6px;padding:10px;margin-top:6px}
 .pl{display:flex;align-items:baseline;gap:6px}.ln{flex:none;width:26px;font:600 11px system-ui,sans-serif;color:#888}
 .tx{font-family:'Courier New',Courier,ui-monospace,monospace;font-weight:700;white-space:pre;font-feature-settings:'zero';font-variant-ligatures:none;line-height:1.25}
@@ -56,7 +56,7 @@ button.s{background:var(--card);color:var(--ac);border:2px solid var(--ac);box-s
 
 <div class="c"><h2>1. Opérateur et produit</h2>
 <div class="r" style="align-items:flex-end"><div style="flex:1"><label>Nom de l'opérateur</label><input id="op" autocomplete="name"></div><div style="flex:1.4"><label>Produit</label><select id="pr"><option value="">— choisir —</option></select></div></div>
-<div class="ty"><b id="ty"></b><span class="m" id="sum"></span></div></div>
+<div class="ty"><span class="m" id="sum"></span></div></div>
 
 <div class="c" id="ctl"><h2>2. Contrôle</h2>
 <div id="pvw" class="hide"><div class="m" id="pcap"></div><div id="pv"></div></div>
@@ -138,7 +138,7 @@ Ces deux fichiers vont ensemble (même dossier « rec/english » du dépôt). Ne
 <div id="camt">Placez le marquage dans le cadre jaune, de près et net</div>
 <div id="camb"><button id="cam1">📸 Prendre la photo</button><div class="r hide" id="cam2"><button id="camok">✅ Valider</button><button id="camre" class="s">↺ Reprendre</button></div>
 <div class="r"><button id="camto" class="s hide">🔦 Lampe</button><button id="camx" class="s">✖ Annuler</button></div></div></div>
-<div id="ft">© D@V · Version 1.9 · 07/11/2026</div>
+<div id="ft">© D@V · Version 1.11 · 07/11/2026</div>
 <div id="mb" class="mb hide"><div class="md"><h3 id="mt"></h3><p id="mm"></p><div class="r"><button id="mc" class="s hide"></button><button id="mo">OK</button></div></div></div>
 <script>
 const $=id=>document.getElementById(id);
@@ -171,10 +171,11 @@ $('xl').onchange=async e=>{
  wb.getWorksheet('Produits').eachRow((r,i)=>{if(i<2)return;const n=(r.getCell(1).text||'').trim(),t=(r.getCell(2).text||'').trim();if(n)P.push({n,t})});
  DB={types:T,prods:P,file:f.name,maj:new Date().toLocaleString('fr-FR')};
  localStorage.setItem('db',JSON.stringify(DB));ui()}catch(err){$('sum').textContent='⚠ Fichier Excel illisible (voir Paramètres)';$('xs').textContent='Erreur de lecture ('+f.size+" octets) : "+err.message+". Le fichier est incomplet ou n'est pas un vrai .xlsx : retéléchargez-le (environ 13 Ko) puis rechargez-le ici."}};
+function baseTxt(){return DB.file?`Base chargée le ${DB.maj} · ${DB.prods.length} produit${DB.prods.length>1?'s':''} · ${Object.keys(DB.types).length} type${Object.keys(DB.types).length>1?'s':''}`:'Aucune base chargée'}
 function ui(){
  $('xs').textContent=DB.file?`${DB.file} (chargé le ${DB.maj})`:'Aucun fichier chargé';
- $('sum').textContent=DB.file?`Base chargée le ${DB.maj} · ${DB.prods.length} produit${DB.prods.length>1?'s':''} · ${Object.keys(DB.types).length} type${Object.keys(DB.types).length>1?'s':''}`:'Aucune base chargée';
- const s=$('pr');let v=s.value;if(!v){try{v=localStorage.getItem('prod')||''}catch(e){}}s.innerHTML='<option value="">— choisir —</option>'+DB.prods.map(p=>`<option>${p.n}</option>`).join('');s.value=v;if(s.value&&!prevProd)prevProd=s.value;exp()}
+ $('sum').textContent=baseTxt();
+ const s=$('pr');let v=s.value;if(!v){try{v=localStorage.getItem('prod')||''}catch(e){}}s.innerHTML='<option value="">— choisir —</option>'+DB.prods.map(p=>`<option value="${p.n}">${p.n} (${p.t})</option>`).join('');s.value=v;if(s.value&&!prevProd)prevProd=s.value;exp()}
 
 /* Calcul du lot et de la date attendus */
 function calc(t,now=new Date()){
@@ -188,9 +189,10 @@ function calc(t,now=new Date()){
  return{lot,date}}
 const typ=()=>{const p=DB.prods.find(x=>x.n===$('pr').value);return p?{name:p.t,...DB.types[p.t]}:null};
 function exp(){const t=typ();
- if(!t){$('ty').textContent='';$('pvw').classList.add('hide');return}
- if(t.dur===undefined&&!t.tpl&&!t.fmt){$('ty').textContent=`Type « ${t.name} » introuvable dans le fichier`;$('pvw').classList.add('hide');return}
- $('ty').textContent='Type : '+t.name;$('pvw').classList.remove('hide');renderPrev($('pv'),expText());
+ if(!t){$('sum').textContent=baseTxt();$('pvw').classList.add('hide');return}
+ if(t.dur===undefined&&!t.tpl&&!t.fmt){$('sum').textContent=`Type « ${t.name} » introuvable dans le fichier`;$('pvw').classList.add('hide');return}
+ $('sum').textContent=baseTxt();
+ $('pvw').classList.remove('hide');renderPrev($('pv'),expText());
  $('pcap').textContent=t.tpl?'Aperçu de ce que le carton doit afficher maintenant (lot, date et heure calculés) :':'⚠ Texte modèle non renseigné dans Excel : aperçu minimal, seuls date et lot sont contrôlés.'}
 $('pr').onchange=async()=>{const n=$('pr').value;try{localStorage.setItem('prod',n)}catch(e){}setTimeout(()=>hist(),0);
  if(prevProd&&n!==prevProd){const old=prevProd;prevProd=n;await closeSerie(old)}
