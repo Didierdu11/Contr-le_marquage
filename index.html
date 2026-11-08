@@ -132,7 +132,7 @@ Ces deux fichiers vont ensemble (même dossier « rec/english » du dépôt). Ne
 <div id="camt">Placez le marquage dans le cadre jaune, de près et net</div>
 <div id="camb"><button id="cam1">📸 Prendre la photo</button><div class="r hide" id="cam2"><button id="camok">✅ Valider</button><button id="camre" class="s">↺ Reprendre</button></div>
 <div class="r"><button id="camto" class="s hide">🔦 Lampe</button><button id="camx" class="s">✖ Annuler</button></div></div></div>
-<div id="ft">© D@V · Version 1.4 · 07/11/2026</div>
+<div id="ft">© D@V · Version 1.6 · 07/11/2026</div>
 <div id="mb" class="mb hide"><div class="md"><h3 id="mt"></h3><p id="mm"></p><div class="r"><button id="mc" class="s hide"></button><button id="mo">OK</button></div></div></div>
 <script>
 const $=id=>document.getElementById(id);
@@ -513,16 +513,19 @@ function statsOf(rows){
  const empty=[];cov.forEach((c,k)=>{if(!c)empty.push(t0+k*9e5)});
  return{n,t0,t1,dur,slots,covered:slots-empty.length,empty,ok,ko:n-ok,man:R.filter(r=>r.val==='manuelle').length,auto:R.filter(r=>r.res==='OK'&&r.val!=='manuelle').length,gapAvg:gaps.length?gaps.reduce((a,b)=>a+b,0)/gaps.length:0,gapMax:gaps.length?Math.max(...gaps):0,g15:gaps.filter(g=>g>15).length,g30:gaps.filter(g=>g>30).length,
   byOp:tab(r=>r.op||'—'),byProd:tab(r=>r.prod||'—'),byLot:tab(r=>r.lot||'—'),byMode:tab(r=>(r.mode||'—').replace(/\s*\(.*\)$/,'')),reasons:[...rs.entries()].sort((a,b)=>b[1]-a[1]),hours}}
+const PH_ROW=165;
+/* paramètres photo repris du fichier de référence : JPEG 0.82, côté max 1000 px, fond blanc, encadré dans 210 x 155 px */
+function xlPhoto(u){return new Promise(res=>{const im=new Image();im.onload=()=>{const k=Math.min(1,1000/im.naturalWidth,1000/im.naturalHeight),w=Math.max(1,Math.round(im.naturalWidth*k)),h=Math.max(1,Math.round(im.naturalHeight*k)),c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(im,0,0,w,h);res({data:c.toDataURL('image/jpeg',0.82),w,h})};im.onerror=()=>res({data:u,w:4,h:3});im.src=u})}
 const HDR={type:'pattern',pattern:'solid',fgColor:{argb:'FFEFE6DD'}};
 async function exportX(rows){
  const R=[...rows].sort((a,b)=>a.ts<b.ts?-1:1),prods=[...new Set(R.map(r=>r.prod))],label=prods.length===1?prods[0]:'Plusieurs produits',n=R.length,now=new Date();
- const H=['Date/heure','Opérateur','Produit','Type','Lot attendu','Date attendue','Texte lu','Résultat','Validation','Raison','Mode','Photo'],Wd=[19,16,22,12,12,14,30,10,22,34,24,16];
- const wb=new ExcelJS.Workbook(),img=new Map();R.forEach((r,i)=>{if(r.photo)img.set(i,wb.addImage({base64:r.photo,extension:'jpeg'}))});
+ const H=['Date/heure','Opérateur','Produit','Type','Lot attendu','Date attendue','Texte lu','Résultat','Validation','Raison','Mode','Photo'],Wd=[19,16,22,12,12,14,30,10,22,34,24,34];
+ const wb=new ExcelJS.Workbook(),img=new Map(),fit=new Map();for(const [i,r] of R.entries()){if(r.photo){const p=await xlPhoto(r.photo),f=Math.min(210/p.w,155/p.h);img.set(i,wb.addImage({base64:p.data,extension:'jpeg'}));fit.set(i,{width:Math.round(p.w*f),height:Math.round(p.h*f)})}}
  const line=r=>[dfr(r.ts),r.op,r.prod,r.type,r.lot,r.date,r.txt,r.res,vl(r),r.why,r.mode,''];
  const head=(ws,title,sub)=>{ws.columns=Wd.map(width=>({width}));ws.addRow([title]);ws.mergeCells(1,1,1,H.length);ws.getRow(1).font={bold:true,size:16};ws.getRow(1).height=28;
   ws.addRow([sub]);ws.mergeCells(2,1,2,H.length);const h=ws.addRow(H);h.font={bold:true};H.forEach((_,i)=>{h.getCell(i+1).fill=HDR})};
- const fill=(ws,items)=>items.forEach(([r,i],k)=>{const x=ws.addRow(line(r));x.height=80;x.alignment={vertical:'top',wrapText:true};
-  if(r.res!=='OK')x.getCell(8).font={bold:true,color:{argb:'FFC0392B'}};if(r.val==='manuelle')x.getCell(9).font={bold:true,color:{argb:'FFE67E22'}};if(img.has(i))ws.addImage(img.get(i),{tl:{col:H.length-1,row:3+k},ext:{width:100,height:100}})});
+ const fill=(ws,items)=>items.forEach(([r,i],k)=>{const x=ws.addRow(line(r));x.height=r.photo?PH_ROW:80;x.alignment={vertical:'top',wrapText:true};
+  if(r.res!=='OK')x.getCell(8).font={bold:true,color:{argb:'FFC0392B'}};if(r.val==='manuelle')x.getCell(9).font={bold:true,color:{argb:'FFE67E22'}};if(img.has(i))ws.addImage(img.get(i),{tl:{col:H.length-1,row:3+k},ext:fit.get(i),editAs:'oneCell'})});
  // 1. Contrôles
  const w1=wb.addWorksheet('Contrôles');head(w1,'Contrôle marquage — '+label,`${n} enregistrement${n>1?'s':''} · exporté le ${dfr(now)}`);fill(w1,R.map((r,i)=>[r,i]));w1.views=[{state:'frozen',ySplit:3}];
  // 2. Statistiques
