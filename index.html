@@ -138,7 +138,7 @@ Ces deux fichiers vont ensemble (même dossier « rec/english » du dépôt). Ne
 <div id="camt">Placez le marquage dans le cadre jaune, de près et net</div>
 <div id="camb"><button id="cam1">📸 Prendre la photo</button><div class="r hide" id="cam2"><button id="camok">✅ Valider</button><button id="camre" class="s">↺ Reprendre</button></div>
 <div class="r"><button id="camto" class="s hide">🔦 Lampe</button><button id="camx" class="s">✖ Annuler</button></div></div></div>
-<div id="ft">© D@V · Version 1.12 · 07/11/2026</div>
+<div id="ft">© D@V · Version 1.13 · 07/11/2026</div>
 <div id="mb" class="mb hide"><div class="md"><h3 id="mt"></h3><p id="mm"></p><div class="r"><button id="mc" class="s hide"></button><button id="mo">OK</button></div></div></div>
 <script>
 const $=id=>document.getElementById(id);
@@ -205,7 +205,7 @@ $('bi').onclick=()=>{if(!ok())return;$('ph2').click()};
 $('bp').onclick=()=>{if(!ok())return;openCam()};
 $('bm').onclick=()=>{if(!ok())return;reset();$('ed').classList.remove('hide');$('tx').focus()};
 function ok(){if(!$('op').value.trim()){info("Saisissez le nom de l'opérateur avant de continuer.",'Opérateur manquant');return false}if(!typ()){info('Choisissez un produit. Si la liste est vide, chargez le fichier Excel dans les Paramètres.','Produit manquant');return false}return true}
-function shrink(f){return new Promise(r=>{const i=new Image();i.onload=()=>{const k=Math.min(1,1600/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);r(c.toDataURL('image/jpeg',.75))};i.src=URL.createObjectURL(f)})}
+function shrink(f){return new Promise(r=>{const i=new Image();i.onload=()=>{const k=Math.min(1,1600/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(i.width*k));c.height=Math.max(1,Math.round(i.height*k));const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(i,0,0,c.width,c.height);r(c.toDataURL('image/jpeg',.75))};i.onerror=()=>r(null);i.src=URL.createObjectURL(f)})}
 let sel=null,img=null,worker=null;
 /* ---- caméra avec cadre en surimpression ---- */
 let cstream=null;
@@ -237,7 +237,7 @@ function draw(){const cv=$('cv'),x=cv.getContext('2d');x.drawImage(img,0,0);
  cv.onpointermove=e=>{if(!st)return;const p=pt(e);sel={x:Math.min(st.x,p.x),y:Math.min(st.y,p.y),w:Math.abs(p.x-st.x),h:Math.abs(p.y-st.y)};draw()};
  cv.onpointerup=()=>{st=null;if(sel&&(sel.w<20||sel.h<20))sel=null;draw()}})();
 $('ph').onchange=$('ph2').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
- reset();cur.photo=await shrink(f);img=new Image();img.onload=()=>{const cv=$('cv');cv.width=img.width;cv.height=img.height;sel=defSel(img.width,img.height);draw();$('cr').classList.remove('hide')};img.src=cur.photo};
+ reset();cur.photo=await shrink(f);if(!cur.photo){info("Cette image ne peut pas être lue (format non pris en charge). Essayez une photo JPEG ou PNG.",'Photo illisible');return}img=new Image();img.onload=()=>{const cv=$('cv');cv.width=img.width;cv.height=img.height;sel=defSel(img.width,img.height);draw();$('cr').classList.remove('hide')};img.onerror=()=>info('Image impossible à afficher. Recommencez avec une autre photo.','Photo illisible');img.src=cur.photo};
 $('bs').onclick=()=>{cur.mode='Photo + saisie manuelle';$('cr').classList.add('hide');$('ocr').textContent='Photo conservée. Saisissez le marquage ci-dessous.';$('ed').classList.remove('hide');fillCmp(cur.photo,'Photo prise');$('cmp').scrollIntoView({block:'start'})};
 function blur(g,W,H,r){let a=Float32Array.from(g),b=new Float32Array(g.length);
  for(let it=0;it<2;it++){
